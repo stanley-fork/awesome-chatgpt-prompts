@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getTranslations, getLocale } from "next-intl/server";
 import { formatDistanceToNow } from "@/lib/date";
-import { Calendar, ArrowBigUp, FileText, Settings, GitPullRequest, Clock, Check, X, Pin } from "lucide-react";
+import { Calendar, ArrowBigUp, FileText, Settings, GitPullRequest, Clock, Check, X, Pin, BadgeCheck } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -75,6 +75,7 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
       email: true,
       avatar: true,
       role: true,
+      verified: true,
       createdAt: true,
       _count: {
         select: {
@@ -175,35 +176,85 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
 
   const totalPages = Math.ceil(total / perPage);
 
-  // Fetch pending change requests for user's prompts (only if owner)
-  const changeRequests = isOwner
-    ? await db.changeRequest.findMany({
-        where: {
-          prompt: {
-            authorId: user.id,
+  // Fetch change requests for this user
+  // 1. Change requests the user submitted (all statuses for owner, approved only for others)
+  // 2. Change requests received on user's prompts (approved ones)
+  const [submittedChangeRequests, receivedChangeRequests] = await Promise.all([
+    // CRs user submitted
+    db.changeRequest.findMany({
+      where: {
+        authorId: user.id,
+        // Non-owners only see approved CRs
+        ...(isOwner ? {} : { status: "APPROVED" }),
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatar: true,
           },
         },
-        orderBy: { createdAt: "desc" },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              avatar: true,
-            },
-          },
-          prompt: {
-            select: {
-              id: true,
-              title: true,
+        prompt: {
+          select: {
+            id: true,
+            title: true,
+            author: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+              },
             },
           },
         },
-      })
-    : [];
+      },
+    }),
+    // CRs received on user's prompts (approved only)
+    db.changeRequest.findMany({
+      where: {
+        prompt: {
+          authorId: user.id,
+        },
+        status: "APPROVED",
+        authorId: { not: user.id }, // Exclude self-submitted
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatar: true,
+          },
+        },
+        prompt: {
+          select: {
+            id: true,
+            title: true,
+            author: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
 
-  const pendingCount = changeRequests.filter((cr) => cr.status === "PENDING").length;
+  // Combine and sort by date, marking the type
+  const allChangeRequests = [
+    ...submittedChangeRequests.map((cr) => ({ ...cr, type: "submitted" as const })),
+    ...receivedChangeRequests.map((cr) => ({ ...cr, type: "received" as const })),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const pendingCount = submittedChangeRequests.filter((cr) => cr.status === "PENDING").length;
   const defaultTab = tab === "changes" ? "changes" : "prompts";
 
   const statusColors = {
@@ -233,6 +284,9 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <h1 className="text-2xl font-bold">{user.name || user.username}</h1>
+                {user.verified && (
+                  <BadgeCheck className="h-5 w-5 text-blue-500" />
+                )}
                 {user.role === "ADMIN" && (
                   <Badge variant="default" className="text-xs">Admin</Badge>
                 )}
@@ -277,99 +331,25 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
       </div>
 
       {/* Tabs for Prompts and Change Requests */}
-      {isOwner ? (
-        <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="prompts" className="gap-2">
-              <FileText className="h-4 w-4" />
-              {t("prompts")}
-            </TabsTrigger>
-            <TabsTrigger value="changes" className="gap-2">
-              <GitPullRequest className="h-4 w-4" />
-              {tChanges("title")}
-              {pendingCount > 0 && (
-                <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-xs">
-                  {pendingCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="prompts">
-            {/* Pinned Prompts Section */}
-            {pinnedPrompts.length > 0 && (
-              <div className="mb-6 pb-6 border-b">
-                <div className="flex items-center gap-2 mb-3">
-                  <Pin className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-medium">{tPrompts("pinnedPrompts")}</h3>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {pinnedPrompts.map((prompt: PromptCardProps["prompt"]) => (
-                    <PromptCard key={prompt.id} prompt={prompt} showPinButton={isOwner} isPinned />
-                  ))}
-                </div>
-              </div>
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="prompts" className="gap-2">
+            <FileText className="h-4 w-4" />
+            {t("prompts")}
+          </TabsTrigger>
+          <TabsTrigger value="changes" className="gap-2">
+            <GitPullRequest className="h-4 w-4" />
+            {tChanges("title")}
+            {isOwner && pendingCount > 0 && (
+              <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-xs">
+                {pendingCount}
+              </Badge>
             )}
+          </TabsTrigger>
+        </TabsList>
 
-            {prompts.length === 0 && pinnedPrompts.length === 0 ? (
-              <div className="text-center py-12 border rounded-lg bg-muted/30">
-                <p className="text-muted-foreground">{t("noPromptsOwner")}</p>
-                <Button asChild className="mt-4" size="sm">
-                  <Link href="/prompts/new">{t("createFirstPrompt")}</Link>
-                </Button>
-              </div>
-            ) : prompts.length > 0 ? (
-              <>
-                {pinnedPrompts.length > 0 && (
-                  <h3 className="text-sm font-medium mb-3">{t("allPrompts")}</h3>
-                )}
-                <PromptList
-                  prompts={prompts}
-                  currentPage={page}
-                  totalPages={totalPages}
-                  pinnedIds={pinnedIds}
-                  showPinButton={isOwner}
-                />
-              </>
-            ) : null}
-          </TabsContent>
-
-          <TabsContent value="changes">
-            {changeRequests.length === 0 ? (
-              <div className="text-center py-12 border rounded-lg bg-muted/30">
-                <GitPullRequest className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">{tChanges("noRequests")}</p>
-              </div>
-            ) : (
-              <div className="divide-y border rounded-lg">
-                {changeRequests.map((cr) => {
-                  const StatusIcon = statusIcons[cr.status];
-                  return (
-                    <Link 
-                      key={cr.id} 
-                      href={`/prompts/${cr.prompt.id}/changes/${cr.id}`}
-                      className="flex items-center justify-between px-3 py-2 hover:bg-accent/50 transition-colors"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{cr.prompt.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(cr.createdAt, locale)}
-                        </p>
-                      </div>
-                      <Badge className={`ml-2 shrink-0 ${statusColors[cr.status]}`}>
-                        <StatusIcon className="h-3 w-3 mr-1" />
-                        {tChanges(cr.status.toLowerCase())}
-                      </Badge>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <div>
-          {/* Pinned Prompts Section for non-owners */}
+        <TabsContent value="prompts">
+          {/* Pinned Prompts Section */}
           {pinnedPrompts.length > 0 && (
             <div className="mb-6 pb-6 border-b">
               <div className="flex items-center gap-2 mb-3">
@@ -378,7 +358,7 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {pinnedPrompts.map((prompt: PromptCardProps["prompt"]) => (
-                  <PromptCard key={prompt.id} prompt={prompt} />
+                  <PromptCard key={prompt.id} prompt={prompt} showPinButton={isOwner} isPinned={isOwner} />
                 ))}
               </div>
             </div>
@@ -386,7 +366,12 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
 
           {prompts.length === 0 && pinnedPrompts.length === 0 ? (
             <div className="text-center py-12 border rounded-lg bg-muted/30">
-              <p className="text-muted-foreground">{t("noPrompts")}</p>
+              <p className="text-muted-foreground">{isOwner ? t("noPromptsOwner") : t("noPrompts")}</p>
+              {isOwner && (
+                <Button asChild className="mt-4" size="sm">
+                  <Link href="/prompts/new">{t("createFirstPrompt")}</Link>
+                </Button>
+              )}
             </div>
           ) : prompts.length > 0 ? (
             <>
@@ -397,11 +382,51 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
                 prompts={prompts}
                 currentPage={page}
                 totalPages={totalPages}
+                pinnedIds={pinnedIds}
+                showPinButton={isOwner}
               />
             </>
           ) : null}
-        </div>
-      )}
+        </TabsContent>
+
+        <TabsContent value="changes">
+          {allChangeRequests.length === 0 ? (
+            <div className="text-center py-12 border rounded-lg bg-muted/30">
+              <GitPullRequest className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">{tChanges("noRequests")}</p>
+            </div>
+          ) : (
+            <div className="divide-y border rounded-lg">
+              {allChangeRequests.map((cr) => {
+                const StatusIcon = statusIcons[cr.status as keyof typeof statusIcons];
+                return (
+                  <Link 
+                    key={cr.id} 
+                    href={`/prompts/${cr.prompt.id}/changes/${cr.id}`}
+                    className="flex items-center justify-between px-3 py-2 hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{cr.prompt.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {cr.type === "submitted" 
+                          ? tChanges("submittedTo", { author: cr.prompt.author?.name || cr.prompt.author?.username })
+                          : tChanges("receivedFrom", { author: cr.author.name || cr.author.username })
+                        }
+                        {" · "}
+                        {formatDistanceToNow(cr.createdAt, locale)}
+                      </p>
+                    </div>
+                    <Badge className={`ml-2 shrink-0 ${statusColors[cr.status as keyof typeof statusColors]}`}>
+                      <StatusIcon className="h-3 w-3 mr-1" />
+                      {tChanges(cr.status.toLowerCase())}
+                    </Badge>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

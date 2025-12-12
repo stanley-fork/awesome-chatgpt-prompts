@@ -32,6 +32,7 @@
   },
   "nav": {
     "home": "Inicio",
+    "feed": "Feed",
     "promptmasters": "Promptmasters",
     "prompts": "Prompts",
     "categories": "Categorías",
@@ -148,7 +149,9 @@
     "pinned": "Fijado en el perfil",
     "unpinned": "Desfijado del perfil",
     "pinFailed": "Error al actualizar fijado",
-    "pinnedPrompts": "Fijados"
+    "pinnedPrompts": "Fijados",
+    "previous": "Anterior",
+    "next": "Siguiente"
   },
   "changeRequests": {
     "title": "Solicitudes de Cambio",
@@ -184,6 +187,8 @@
     "reopen": "Reabrir",
     "reopenedSuccess": "Solicitud de cambio reabierta",
     "noRequests": "Sin solicitudes de cambio",
+    "submittedTo": "Enviado a {author}",
+    "receivedFrom": "Recibido de {author}",
     "edit": "Editar",
     "preview": "Vista previa",
     "noChangesYet": "Sin cambios aún",
@@ -260,6 +265,11 @@
       "deleteFailed": "Error al eliminar usuario",
       "roleUpdated": "Rol de usuario actualizado",
       "roleUpdateFailed": "Error al actualizar rol",
+      "verify": "Verificar",
+      "unverify": "Quitar verificación",
+      "verified": "Usuario verificado",
+      "unverified": "Usuario no verificado",
+      "verifyFailed": "Error al actualizar verificación",
       "deleteConfirmTitle": "¿Eliminar Usuario?",
       "deleteConfirmDescription": "Esta acción no se puede deshacer. Todos los datos del usuario serán eliminados permanentemente."
     },
@@ -441,7 +451,9 @@
     "heroFeature2": "Auto-hospeda para Privacidad",
     "heroFeature3": "Para Equipos y Organizaciones",
     "cloneOnGithub": "Clonar en GitHub",
+    "beStargazer": "Sé el stargazer número {count} en GitHub",
     "browsePrompts": "Explorar Prompts",
+    "viewFeed": "Ver Feed",
     "readyToStart": "¿Listo para comenzar?",
     "freeAndOpen": "Gratis y de código abierto.",
     "createAccount": "Crear Cuenta",

@@ -32,6 +32,7 @@
   },
   "nav": {
     "home": "首页",
+    "feed": "动态",
     "promptmasters": "Promptmasters",
     "prompts": "提示词",
     "categories": "分类",
@@ -148,7 +149,9 @@
     "pinned": "已置顶到个人资料",
     "unpinned": "已从个人资料取消置顶",
     "pinFailed": "置顶更新失败",
-    "pinnedPrompts": "已置顶"
+    "pinnedPrompts": "已置顶",
+    "previous": "上一页",
+    "next": "下一页"
   },
   "changeRequests": {
     "title": "变更请求",
@@ -184,6 +187,8 @@
     "reopen": "重新开启",
     "reopenedSuccess": "变更请求已重新开启",
     "noRequests": "暂无变更请求",
+    "submittedTo": "提交给 {author}",
+    "receivedFrom": "来自 {author}",
     "edit": "编辑",
     "preview": "预览",
     "noChangesYet": "暂无变更",
@@ -260,6 +265,11 @@
       "deleteFailed": "删除用户失败",
       "roleUpdated": "用户角色已更新",
       "roleUpdateFailed": "更新角色失败",
+      "verify": "验证",
+      "unverify": "取消验证",
+      "verified": "用户已验证",
+      "unverified": "用户验证已取消",
+      "verifyFailed": "更新验证失败",
       "deleteConfirmTitle": "删除用户？",
       "deleteConfirmDescription": "此操作无法撤销。所有用户数据将被永久删除。"
     },
@@ -418,7 +428,9 @@
     "heroFeature2": "自托管保护隐私",
     "heroFeature3": "适用于团队和组织",
     "cloneOnGithub": "在 GitHub 上克隆",
+    "beStargazer": "成为 GitHub 上第 {count} 位 Star 用户",
     "browsePrompts": "浏览提示词",
+    "viewFeed": "查看动态",
     "readyToStart": "准备好开始了吗？",
     "freeAndOpen": "免费且开源。",
     "createAccount": "创建账户",

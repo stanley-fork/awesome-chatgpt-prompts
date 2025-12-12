@@ -32,6 +32,7 @@
   },
   "nav": {
     "home": "الرئيسية",
+    "feed": "الخلاصة",
     "promptmasters": "Promptmasters",
     "prompts": "الأوامر",
     "categories": "التصنيفات",
@@ -150,7 +151,9 @@
     "pinned": "تم التثبيت في الملف الشخصي",
     "unpinned": "تم إلغاء التثبيت من الملف الشخصي",
     "pinFailed": "فشل تحديث التثبيت",
-    "pinnedPrompts": "مثبتة"
+    "pinnedPrompts": "مثبتة",
+    "previous": "السابق",
+    "next": "التالي"
   },
   "changeRequests": {
     "title": "طلبات التغيير",
@@ -186,6 +189,8 @@
     "reopen": "إعادة فتح",
     "reopenedSuccess": "تم إعادة فتح طلب التغيير",
     "noRequests": "لا توجد طلبات تغيير",
+    "submittedTo": "مُرسل إلى {author}",
+    "receivedFrom": "مستلم من {author}",
     "edit": "تعديل",
     "preview": "معاينة",
     "noChangesYet": "لا توجد تغييرات بعد",
@@ -266,6 +271,11 @@
       "deleteFailed": "فشل حذف المستخدم",
       "roleUpdated": "تم تحديث دور المستخدم",
       "roleUpdateFailed": "فشل تحديث الدور",
+      "verify": "توثيق",
+      "unverify": "إلغاء التوثيق",
+      "verified": "تم توثيق المستخدم",
+      "unverified": "تم إلغاء توثيق المستخدم",
+      "verifyFailed": "فشل تحديث التوثيق",
       "deleteConfirmTitle": "حذف المستخدم؟",
       "deleteConfirmDescription": "هذا الإجراء لا يمكن التراجع عنه. سيتم حذف جميع بيانات المستخدم نهائياً."
     },
@@ -424,7 +434,9 @@
     "heroFeature2": "استضافة ذاتية للخصوصية",
     "heroFeature3": "للفرق والمؤسسات",
     "cloneOnGithub": "استنساخ على GitHub",
+    "beStargazer": "كن النجمة رقم {count} على GitHub",
     "browsePrompts": "تصفح الأوامر",
+    "viewFeed": "عرض الموجز",
     "readyToStart": "مستعد للبدء؟",
     "freeAndOpen": "مجاني ومفتوح المصدر.",
     "createAccount": "إنشاء حساب",

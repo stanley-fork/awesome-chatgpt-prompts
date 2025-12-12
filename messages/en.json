@@ -32,6 +32,7 @@
   },
   "nav": {
     "home": "Home",
+    "feed": "Feed",
     "promptmasters": "Promptmasters",
     "prompts": "Prompts",
     "categories": "Categories",
@@ -164,7 +165,9 @@
     "pinned": "Pinned to profile",
     "unpinned": "Unpinned from profile",
     "pinFailed": "Failed to update pin",
-    "pinnedPrompts": "Pinned"
+    "pinnedPrompts": "Pinned",
+    "previous": "Previous",
+    "next": "Next"
   },
   "changeRequests": {
     "title": "Change Requests",
@@ -200,6 +203,8 @@
     "reopen": "Reopen",
     "reopenedSuccess": "Change request reopened",
     "noRequests": "No change requests",
+    "submittedTo": "Submitted to {author}",
+    "receivedFrom": "Received from {author}",
     "edit": "Edit",
     "preview": "Preview",
     "noChangesYet": "No changes yet",
@@ -300,6 +305,11 @@
       "deleteFailed": "Failed to delete user",
       "roleUpdated": "User role updated",
       "roleUpdateFailed": "Failed to update role",
+      "verify": "Verify",
+      "unverify": "Unverify",
+      "verified": "User verified",
+      "unverified": "User unverified",
+      "verifyFailed": "Failed to update verification",
       "deleteConfirmTitle": "Delete User?",
       "deleteConfirmDescription": "This action cannot be undone. All user data will be permanently deleted."
     },
@@ -523,7 +533,9 @@
     "heroFeature2": "Self-host for Privacy",
     "heroFeature3": "For Teams & Organizations",
     "cloneOnGithub": "Clone on GitHub",
+    "beStargazer": "Be the {count}{ordinal} stargazer on GitHub",
     "browsePrompts": "Browse Prompts",
+    "viewFeed": "View Feed",
     "readyToStart": "Ready to get started?",
     "freeAndOpen": "Free and open source.",
     "createAccount": "Create Account",
