@@ -151,7 +151,9 @@
     "pinFailed": "固定の更新に失敗しました",
     "pinnedPrompts": "固定済み",
     "previous": "前へ",
-    "next": "次へ"
+    "next": "次へ",
+    "mediaLoadError": "このプロンプトのメディアを読み込めませんでした。URLが無効であるか、リソースが利用できなくなっている可能性があります。",
+    "mediaUnavailable": "メディアを利用できません"
   },
   "changeRequests": {
     "title": "変更リクエスト",
@@ -192,7 +194,11 @@
     "edit": "編集",
     "preview": "プレビュー",
     "noChangesYet": "まだ変更はありません",
-    "changesDetected": "変更を検出しました"
+    "changesDetected": "変更を検出しました",
+    "dismiss": "取り下げ",
+    "dismissed": "変更リクエストを取り下げました",
+    "dismissConfirmTitle": "変更リクエストを取り下げますか？",
+    "dismissConfirmDescription": "変更リクエストは完全に削除されます。この操作は取り消せません。"
   },
   "categories": {
     "title": "カテゴリー",
@@ -360,7 +366,12 @@
     "noPromptsOwner": "まだプロンプトを作成していません",
     "createFirstPrompt": "最初のプロンプトを作成",
     "upvotesReceived": "獲得した高評価",
-    "editProfile": "プロフィールを編集"
+    "editProfile": "プロフィールを編集",
+    "contributions": "コントリビューション",
+    "contributionsCount": "コントリビューション",
+    "noContributions": "コントリビューションはまだありません",
+    "noContributionsOwner": "まだどのプロンプトにも貢献していません",
+    "contributedTo": "{author}のプロンプトに貢献"
   },
   "subscription": {
     "subscribe": "購読",
@@ -370,7 +381,9 @@
     "loginToSubscribe": "購読するにはログインしてください"
   },
   "vote": {
-    "loginToVote": "高評価するにはログインしてください",
+    "loginRequired": "ログインが必要です",
+    "loginToVote": "プロンプトに高評価を付けて投票を保存するにはログインしてください。",
+    "goToLogin": "ログインへ",
     "upvote": "高評価",
     "upvotes": "高評価"
   },

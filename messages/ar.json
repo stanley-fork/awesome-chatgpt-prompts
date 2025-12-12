@@ -151,9 +151,11 @@
     "pinned": "تم التثبيت في الملف الشخصي",
     "unpinned": "تم إلغاء التثبيت من الملف الشخصي",
     "pinFailed": "فشل تحديث التثبيت",
-    "pinnedPrompts": "مثبتة",
+    "pinnedPrompts": "المثبتة",
     "previous": "السابق",
-    "next": "التالي"
+    "next": "التالي",
+    "mediaLoadError": "تعذر تحميل الوسائط لهذا الأمر. قد يكون الرابط غير صالح أو أن المورد لم يعد متاحاً.",
+    "mediaUnavailable": "الوسائط غير متاحة"
   },
   "changeRequests": {
     "title": "طلبات التغيير",
@@ -194,7 +196,11 @@
     "edit": "تعديل",
     "preview": "معاينة",
     "noChangesYet": "لا توجد تغييرات بعد",
-    "changesDetected": "تم اكتشاف تغييرات"
+    "changesDetected": "تم اكتشاف تغييرات",
+    "dismiss": "سحب",
+    "dismissed": "تم سحب طلب التغيير",
+    "dismissConfirmTitle": "سحب طلب التغيير؟",
+    "dismissConfirmDescription": "سيؤدي هذا إلى حذف طلب التغيير نهائياً. لا يمكن التراجع عن هذا الإجراء."
   },
   "categories": {
     "title": "التصنيفات",
@@ -366,7 +372,12 @@
     "noPromptsOwner": "لم تقم بإنشاء أي أوامر بعد",
     "createFirstPrompt": "أنشئ أول أمر لك",
     "upvotesReceived": "تصويتات مستلمة",
-    "editProfile": "تعديل الملف الشخصي"
+    "editProfile": "تعديل الملف الشخصي",
+    "contributions": "المساهمات",
+    "contributionsCount": "مساهمات",
+    "noContributions": "لا توجد مساهمات بعد",
+    "noContributionsOwner": "لم تساهم في أي أوامر بعد",
+    "contributedTo": "ساهم في أمر {author}"
   },
   "subscription": {
     "subscribe": "اشتراك",
@@ -376,7 +387,9 @@
     "loginToSubscribe": "يرجى تسجيل الدخول للاشتراك"
   },
   "vote": {
-    "loginToVote": "يرجى تسجيل الدخول للتصويت",
+    "loginRequired": "تسجيل الدخول مطلوب",
+    "loginToVote": "يرجى تسجيل الدخول للتصويت وحفظ أصواتك.",
+    "goToLogin": "الذهاب لتسجيل الدخول",
     "upvote": "تصويت",
     "upvotes": "تصويتات"
   },

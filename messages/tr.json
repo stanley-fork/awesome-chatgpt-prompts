@@ -167,7 +167,9 @@
     "pinFailed": "Sabitleme güncellenemedi",
     "pinnedPrompts": "Sabitlenmiş",
     "previous": "Önceki",
-    "next": "Sonraki"
+    "next": "Sonraki",
+    "mediaLoadError": "Bu prompt için medya yüklenemedi. URL geçersiz olabilir veya kaynak artık mevcut değil.",
+    "mediaUnavailable": "Medya kullanılamıyor"
   },
   "changeRequests": {
     "title": "Değişiklik İstekleri",
@@ -208,7 +210,11 @@
     "edit": "Düzenle",
     "preview": "Önizleme",
     "noChangesYet": "Henüz değişiklik yok",
-    "changesDetected": "Değişiklikler tespit edildi"
+    "changesDetected": "Değişiklikler tespit edildi",
+    "dismiss": "Geri Çek",
+    "dismissed": "Değişiklik talebi geri çekildi",
+    "dismissConfirmTitle": "Değişiklik Talebini Geri Çek?",
+    "dismissConfirmDescription": "Bu işlem değişiklik talebinizi kalıcı olarak silecektir. Bu işlem geri alınamaz."
   },
   "categories": {
     "title": "Kategoriler",
@@ -464,7 +470,12 @@
     "createFirstPrompt": "İlk promptunuzu oluşturun",
     "upvotesReceived": "beğeni aldı",
     "editProfile": "Profili Düzenle",
-    "unclaimedUser": "Sahipsiz"
+    "unclaimedUser": "Sahipsiz",
+    "contributions": "Katkılar",
+    "contributionsCount": "katkı",
+    "noContributions": "Henüz katkı yok",
+    "noContributionsOwner": "Henüz hiçbir prompta katkıda bulunmadınız",
+    "contributedTo": "{author} kullanıcısının promptuna katkıda bulunuldu"
   },
   "subscription": {
     "subscribe": "Abone Ol",
@@ -475,7 +486,9 @@
     "loginToSubscribe": "Abone olmak için giriş yapın"
   },
   "vote": {
-    "loginToVote": "Oy vermek için giriş yapın",
+    "loginRequired": "Giriş Gerekli",
+    "loginToVote": "Promptları beğenmek ve oylarınızı kaydetmek için giriş yapın.",
+    "goToLogin": "Giriş Yap",
     "upvote": "beğeni",
     "upvotes": "beğeni"
   },

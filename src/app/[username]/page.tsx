@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getTranslations, getLocale } from "next-intl/server";
 import { formatDistanceToNow } from "@/lib/date";
-import { Calendar, ArrowBigUp, FileText, Settings, GitPullRequest, Clock, Check, X, Pin, BadgeCheck } from "lucide-react";
+import { Calendar, ArrowBigUp, FileText, Settings, GitPullRequest, Clock, Check, X, Pin, BadgeCheck, Users } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,10 +23,12 @@ export async function generateMetadata({ params }: UserProfilePageProps): Promis
   const { username: rawUsername } = await params;
   const decodedUsername = decodeURIComponent(rawUsername);
   
-  // Support both /@username and /username formats
-  const username = decodedUsername.startsWith("@") 
-    ? decodedUsername.slice(1) 
-    : decodedUsername;
+  // Only support /@username format
+  if (!decodedUsername.startsWith("@")) {
+    return { title: "User Not Found" };
+  }
+  
+  const username = decodedUsername.slice(1);
     
   const user = await db.user.findUnique({
     where: { username },
@@ -55,16 +57,12 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
   // Decode URL-encoded @ symbol
   const decodedUsername = decodeURIComponent(rawUsername);
   
-  // Support both /@username and /username formats
-  // Strip @ prefix if present
-  const username = decodedUsername.startsWith("@") 
-    ? decodedUsername.slice(1) 
-    : decodedUsername;
-  
-  // Redirect old format to new @ format
+  // Only support /@username format - reject URLs without @
   if (!decodedUsername.startsWith("@")) {
-    // For now, just continue - could add redirect later
+    notFound();
   }
+  
+  const username = decodedUsername.slice(1);
 
   const user = await db.user.findUnique({
     where: { username },
@@ -80,6 +78,7 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
       _count: {
         select: {
           prompts: true,
+          contributions: true,
         },
       },
     },
@@ -127,8 +126,8 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
     },
   };
 
-  // Fetch prompts, pinned prompts, and counts
-  const [promptsRaw, total, totalUpvotes, pinnedPromptsRaw] = await Promise.all([
+  // Fetch prompts, pinned prompts, contributions, and counts
+  const [promptsRaw, total, totalUpvotes, pinnedPromptsRaw, contributionsRaw] = await Promise.all([
     db.prompt.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -153,10 +152,29 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
         },
       },
     }),
+    // Fetch contributions (prompts where user is contributor but not author)
+    db.prompt.findMany({
+      where: {
+        contributors: {
+          some: { id: user.id },
+        },
+        authorId: { not: user.id },
+        isPrivate: false,
+      },
+      orderBy: { updatedAt: "desc" },
+      include: promptInclude,
+    }),
   ]);
 
   // Transform to include voteCount and contributorCount
   const prompts = promptsRaw.map((p) => ({
+    ...p,
+    voteCount: p._count?.votes ?? 0,
+    contributorCount: p._count?.contributors ?? 0,
+  }));
+
+  // Transform contributions
+  const contributions = contributionsRaw.map((p) => ({
     ...p,
     voteCount: p._count?.votes ?? 0,
     contributorCount: p._count?.contributors ?? 0,
@@ -255,7 +273,7 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const pendingCount = submittedChangeRequests.filter((cr) => cr.status === "PENDING").length;
-  const defaultTab = tab === "changes" ? "changes" : "prompts";
+  const defaultTab = tab === "changes" ? "changes" : tab === "contributions" ? "contributions" : "prompts";
 
   const statusColors = {
     PENDING: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
@@ -272,62 +290,79 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
   return (
     <div className="container py-6">
       {/* Profile Header */}
-      <div className="flex flex-col md:flex-row items-start gap-6 mb-8">
-        <Avatar className="h-20 w-20">
-          <AvatarImage src={user.avatar || undefined} />
-          <AvatarFallback className="text-2xl">
-            {user.name?.charAt(0) || user.username.charAt(0)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-2xl font-bold">{user.name || user.username}</h1>
-                {user.verified && (
-                  <BadgeCheck className="h-5 w-5 text-blue-500" />
-                )}
-                {user.role === "ADMIN" && (
-                  <Badge variant="default" className="text-xs">Admin</Badge>
-                )}
-              </div>
-              <p className="text-muted-foreground text-sm mb-3 flex items-center gap-2">
-                @{user.username}
-                {isUnclaimed && (
-                  <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 bg-amber-500/10">
-                    {t("unclaimedUser")}
-                  </Badge>
-                )}
-              </p>
+      <div className="flex flex-col gap-4 mb-8">
+        {/* Avatar + Name row */}
+        <div className="flex items-center gap-4">
+          <Avatar className="h-16 w-16 md:h-20 md:w-20 shrink-0">
+            <AvatarImage src={user.avatar || undefined} />
+            <AvatarFallback className="text-xl md:text-2xl">
+              {user.name?.charAt(0) || user.username.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl md:text-2xl font-bold truncate">{user.name || user.username}</h1>
+              {user.verified && (
+                <BadgeCheck className="h-5 w-5 text-blue-500 shrink-0" />
+              )}
+              {user.role === "ADMIN" && (
+                <Badge variant="default" className="text-xs shrink-0">Admin</Badge>
+              )}
             </div>
-            {isOwner && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/settings">
-                  <Settings className="h-4 w-4 mr-1.5" />
-                  {t("editProfile")}
-                </Link>
-              </Button>
-            )}
+            <p className="text-muted-foreground text-sm flex items-center gap-2 flex-wrap">
+              @{user.username}
+              {isUnclaimed && (
+                <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 bg-amber-500/10">
+                  {t("unclaimedUser")}
+                </Badge>
+              )}
+            </p>
           </div>
+          {/* Edit button - desktop only */}
+          {isOwner && (
+            <Button variant="outline" size="sm" asChild className="hidden md:inline-flex shrink-0">
+              <Link href="/settings">
+                <Settings className="h-4 w-4 mr-1.5" />
+                {t("editProfile")}
+              </Link>
+            </Button>
+          )}
+        </div>
 
-          {/* Stats */}
-          <div className="flex items-center gap-6 text-sm">
-            <div className="flex items-center gap-1.5">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{user._count.prompts}</span>
-              <span className="text-muted-foreground">{t("prompts").toLowerCase()}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <ArrowBigUp className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{totalUpvotes}</span>
-              <span className="text-muted-foreground">{t("upvotesReceived")}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>{t("joined")} {formatDistanceToNow(user.createdAt, locale)}</span>
-            </div>
+        {/* Stats - stacked on mobile, inline on desktop */}
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-6 text-sm">
+          <div className="flex items-center gap-1.5">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">{user._count.prompts}</span>
+            <span className="text-muted-foreground">{t("prompts").toLowerCase()}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <ArrowBigUp className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">{totalUpvotes}</span>
+            <span className="text-muted-foreground">{t("upvotesReceived")}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">{user._count.contributions}</span>
+            <span className="text-muted-foreground">{t("contributionsCount")}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            <span>{t("joined")} {formatDistanceToNow(user.createdAt, locale)}</span>
           </div>
         </div>
+
+        {/* Edit button - below stats on mobile */}
+        {isOwner && (
+          <div className="md:hidden">
+            <Button variant="outline" size="sm" asChild className="w-full">
+              <Link href="/settings">
+                <Settings className="h-4 w-4 mr-1.5" />
+                {t("editProfile")}
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Tabs for Prompts and Change Requests */}
@@ -336,6 +371,15 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
           <TabsTrigger value="prompts" className="gap-2">
             <FileText className="h-4 w-4" />
             {t("prompts")}
+          </TabsTrigger>
+          <TabsTrigger value="contributions" className="gap-2">
+            <Users className="h-4 w-4" />
+            {t("contributions")}
+            {contributions.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 text-xs">
+                {contributions.length}
+              </Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="changes" className="gap-2">
             <GitPullRequest className="h-4 w-4" />
@@ -387,6 +431,21 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
               />
             </>
           ) : null}
+        </TabsContent>
+
+        <TabsContent value="contributions">
+          {contributions.length === 0 ? (
+            <div className="text-center py-12 border rounded-lg bg-muted/30">
+              <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">{isOwner ? t("noContributionsOwner") : t("noContributions")}</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {contributions.map((prompt: PromptCardProps["prompt"]) => (
+                <PromptCard key={prompt.id} prompt={prompt} />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="changes">

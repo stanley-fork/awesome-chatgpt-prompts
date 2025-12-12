@@ -167,7 +167,9 @@
     "pinFailed": "Failed to update pin",
     "pinnedPrompts": "Pinned",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "mediaLoadError": "The media for this prompt could not be loaded. The URL may be invalid or the resource is no longer available.",
+    "mediaUnavailable": "Media unavailable"
   },
   "changeRequests": {
     "title": "Change Requests",
@@ -208,7 +210,11 @@
     "edit": "Edit",
     "preview": "Preview",
     "noChangesYet": "No changes yet",
-    "changesDetected": "Changes detected"
+    "changesDetected": "Changes detected",
+    "dismiss": "Dismiss",
+    "dismissed": "Change request dismissed",
+    "dismissConfirmTitle": "Dismiss Change Request?",
+    "dismissConfirmDescription": "This will permanently delete your change request. This action cannot be undone."
   },
   "categories": {
     "title": "Categories",
@@ -464,7 +470,12 @@
     "createFirstPrompt": "Create your first prompt",
     "upvotesReceived": "upvotes received",
     "editProfile": "Edit Profile",
-    "unclaimedUser": "Unclaimed"
+    "unclaimedUser": "Unclaimed",
+    "contributions": "Contributions",
+    "contributionsCount": "contributions",
+    "noContributions": "No contributions yet",
+    "noContributionsOwner": "You haven't contributed to any prompts yet",
+    "contributedTo": "Contributed to {author}'s prompt"
   },
   "subscription": {
     "subscribe": "Subscribe",
@@ -475,7 +486,9 @@
     "loginToSubscribe": "Please login to subscribe"
   },
   "vote": {
-    "loginToVote": "Please login to upvote",
+    "loginRequired": "Login Required",
+    "loginToVote": "Please login to upvote prompts and save your votes.",
+    "goToLogin": "Go to Login",
     "upvote": "upvote",
     "upvotes": "upvotes"
   },

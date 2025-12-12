@@ -150,8 +150,10 @@
     "unpinned": "已从个人资料取消置顶",
     "pinFailed": "置顶更新失败",
     "pinnedPrompts": "已置顶",
-    "previous": "上一页",
-    "next": "下一页"
+    "previous": "上一个",
+    "next": "下一个",
+    "mediaLoadError": "无法加载此提示词的媒体。URL可能无效或资源已不可用。",
+    "mediaUnavailable": "媒体不可用"
   },
   "changeRequests": {
     "title": "变更请求",
@@ -192,7 +194,11 @@
     "edit": "编辑",
     "preview": "预览",
     "noChangesYet": "暂无变更",
-    "changesDetected": "检测到变更"
+    "changesDetected": "检测到变更",
+    "dismiss": "撤回",
+    "dismissed": "变更请求已撤回",
+    "dismissConfirmTitle": "撤回变更请求？",
+    "dismissConfirmDescription": "这将永久删除您的变更请求。此操作无法撤销。"
   },
   "categories": {
     "title": "分类",
@@ -360,7 +366,12 @@
     "noPromptsOwner": "您还没有创建任何提示词",
     "createFirstPrompt": "创建您的第一个提示词",
     "upvotesReceived": "收到的点赞",
-    "editProfile": "编辑资料"
+    "editProfile": "编辑资料",
+    "contributions": "贡献",
+    "contributionsCount": "贡献",
+    "noContributions": "暂无贡献",
+    "noContributionsOwner": "您还没有对任何提示词做出贡献",
+    "contributedTo": "贡献给 {author} 的提示词"
   },
   "subscription": {
     "subscribe": "订阅",
@@ -370,7 +381,9 @@
     "loginToSubscribe": "请登录后订阅"
   },
   "vote": {
-    "loginToVote": "请登录后点赞",
+    "loginRequired": "需要登录",
+    "loginToVote": "请登录后点赞并保存您的投票。",
+    "goToLogin": "去登录",
     "upvote": "赞",
     "upvotes": "赞"
   },

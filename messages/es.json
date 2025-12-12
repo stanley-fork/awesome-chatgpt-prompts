@@ -151,7 +151,9 @@
     "pinFailed": "Error al actualizar fijado",
     "pinnedPrompts": "Fijados",
     "previous": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "mediaLoadError": "No se pudo cargar el medio de este prompt. La URL puede ser inválida o el recurso ya no está disponible.",
+    "mediaUnavailable": "Medio no disponible"
   },
   "changeRequests": {
     "title": "Solicitudes de Cambio",
@@ -192,7 +194,11 @@
     "edit": "Editar",
     "preview": "Vista previa",
     "noChangesYet": "Sin cambios aún",
-    "changesDetected": "Cambios detectados"
+    "changesDetected": "Cambios detectados",
+    "dismiss": "Retirar",
+    "dismissed": "Solicitud de cambio retirada",
+    "dismissConfirmTitle": "¿Retirar Solicitud de Cambio?",
+    "dismissConfirmDescription": "Esto eliminará permanentemente tu solicitud de cambio. Esta acción no se puede deshacer."
   },
   "categories": {
     "title": "Categorías",
@@ -383,7 +389,12 @@
     "noPromptsOwner": "Aún no has creado ningún prompt",
     "createFirstPrompt": "Crea tu primer prompt",
     "upvotesReceived": "votos recibidos",
-    "editProfile": "Editar Perfil"
+    "editProfile": "Editar Perfil",
+    "contributions": "Contribuciones",
+    "contributionsCount": "contribuciones",
+    "noContributions": "Sin contribuciones aún",
+    "noContributionsOwner": "Aún no has contribuido a ningún prompt",
+    "contributedTo": "Contribuyó al prompt de {author}"
   },
   "subscription": {
     "subscribe": "Suscribirse",
@@ -393,7 +404,9 @@
     "loginToSubscribe": "Por favor inicia sesión para suscribirte"
   },
   "vote": {
-    "loginToVote": "Por favor inicia sesión para votar",
+    "loginRequired": "Inicio de Sesión Requerido",
+    "loginToVote": "Por favor inicia sesión para votar y guardar tus votos.",
+    "goToLogin": "Ir a Iniciar Sesión",
     "upvote": "voto",
     "upvotes": "votos"
   },

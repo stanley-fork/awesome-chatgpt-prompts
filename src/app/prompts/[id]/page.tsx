@@ -19,6 +19,7 @@ import { DeleteVersionButton } from "@/components/prompts/delete-version-button"
 import { VersionCompareModal } from "@/components/prompts/version-compare-modal";
 import { VersionCompareButton } from "@/components/prompts/version-compare-button";
 import { FeaturePromptButton } from "@/components/prompts/feature-prompt-button";
+import { MediaPreview } from "@/components/prompts/media-preview";
 
 interface PromptPageProps {
   params: Promise<{ id: string }>;
@@ -251,7 +252,7 @@ export default async function PromptPage({ params }: PromptPageProps) {
                   {prompt.contributors.map((contributor) => (
                     <Link
                       key={contributor.id}
-                      href={`/${contributor.username}`}
+                      href={`/@${contributor.username}`}
                       className="flex items-center gap-2 hover:underline rounded px-1 py-0.5 -mx-1"
                     >
                       <Avatar className="h-4 w-4">
@@ -299,61 +300,57 @@ export default async function PromptPage({ params }: PromptPageProps) {
 
       {/* Content Tabs */}
       <Tabs defaultValue="content">
-        <div className="flex items-center justify-between mb-4">
-          <TabsList>
-          <TabsTrigger value="content">{t("promptContent")}</TabsTrigger>
-          <TabsTrigger value="versions">
-            <History className="h-4 w-4 mr-1" />
-            {t("versions")}
-          </TabsTrigger>
-          {changeRequests.length > 0 && (
-            <TabsTrigger value="changes" className="gap-1">
-              <GitPullRequest className="h-4 w-4" />
-              {t("changeRequests")}
-              {pendingCount > 0 && (
-                <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-xs">
-                  {pendingCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-          )}
-          </TabsList>
+        <div className="flex flex-col gap-3 mb-4">
+          {/* Propose changes button - on top on mobile */}
           {!isOwner && session?.user && (
-            <Button asChild size="sm">
-              <Link href={`/prompts/${id}/changes/new`}>
-                <GitPullRequest className="h-4 w-4 mr-1.5" />
-                {t("createChangeRequest")}
-              </Link>
-            </Button>
+            <div className="md:hidden">
+              <Button asChild size="sm" className="w-full">
+                <Link href={`/prompts/${id}/changes/new`}>
+                  <GitPullRequest className="h-4 w-4 mr-1.5" />
+                  {t("createChangeRequest")}
+                </Link>
+              </Button>
+            </div>
           )}
+          <div className="flex items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="content">{t("promptContent")}</TabsTrigger>
+              <TabsTrigger value="versions">
+                <History className="h-4 w-4 mr-1" />
+                {t("versions")}
+              </TabsTrigger>
+              {changeRequests.length > 0 && (
+                <TabsTrigger value="changes" className="gap-1">
+                  <GitPullRequest className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t("changeRequests")}</span>
+                  {pendingCount > 0 && (
+                    <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-xs">
+                      {pendingCount}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              )}
+            </TabsList>
+            {/* Propose changes button - inline on desktop */}
+            {!isOwner && session?.user && (
+              <Button asChild size="sm" className="hidden md:inline-flex">
+                <Link href={`/prompts/${id}/changes/new`}>
+                  <GitPullRequest className="h-4 w-4 mr-1.5" />
+                  {t("createChangeRequest")}
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
 
         <TabsContent value="content" className="space-y-4 mt-0">
           {/* Media Preview (for image/video prompts) */}
           {prompt.mediaUrl && (
-            <div className="rounded-lg overflow-hidden border bg-muted/30">
-              {prompt.type === "VIDEO" ? (
-                <video
-                  src={prompt.mediaUrl}
-                  controls
-                  className="w-full max-h-[500px] object-contain block"
-                />
-              ) : (
-                <a 
-                  href={prompt.mediaUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="block"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={prompt.mediaUrl}
-                    alt={prompt.title}
-                    className="w-full max-h-[500px] object-contain block"
-                  />
-                </a>
-              )}
-            </div>
+            <MediaPreview 
+              mediaUrl={prompt.mediaUrl} 
+              title={prompt.title} 
+              type={prompt.type} 
+            />
           )}
 
           {/* Prompt Text Content */}
