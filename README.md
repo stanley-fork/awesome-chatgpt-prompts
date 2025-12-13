@@ -1,5 +1,7 @@
 <p align="center">
   <img width="558" height="148" alt="Screenshot 2025-12-12 at 02 40 52" src="https://github.com/user-attachments/assets/8de2ba4c-5e89-4aae-aecb-32b188fb1bfb" />
+  <br>
+  <small>a.k.a. Awesome ChatGPT Prompts</small>
 </p>
 
 <h2 align="center">Sponsors</h3>
@@ -107,16 +109,6 @@ Images from Text"**.
 
 ---
 
-## Unmerged Prompts
-
-There are many Pull Requests to this repository waiting to be merged. There are
-many hidden gems there. Take a look!
-
-📖
-**[View Unmerged Prompts](https://github.com/f/awesome-chatgpt-prompts/pulls)**
-
----
-
 # Prompts
 
 🔍 **[View All Prompts on GitHub (prompts.csv)](https://github.com/f/awesome-chatgpt-prompts/blob/main/prompts.csv)**
@@ -137,4 +129,6 @@ Many thanks to these AI whisperers:
 
 # License
 
-CC-0
+This work is licensed under [CC0 1.0 Universal (Public Domain Dedication)](https://creativecommons.org/publicdomain/zero/1.0/).
+
+You can copy, modify, distribute, and use the prompts freely — even for commercial purposes — without asking permission or giving attribution. All prompts contributed to this repository are released into the public domain.

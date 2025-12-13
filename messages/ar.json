@@ -74,6 +74,13 @@
   "prompts": {
     "title": "الأوامر",
     "create": "إنشاء أمر",
+    "hfDataStudio": {
+      "button": "استوديو بيانات HF",
+      "sqlQuery": "استعلام SQL",
+      "openDataset": "فتح مجموعة البيانات",
+      "runQuery": "تشغيل الاستعلام على HF",
+      "examples": "استعلامات نموذجية"
+    },
     "edit": "تعديل الأمر",
     "delete": "حذف الأمر",
     "myPrompts": "أوامري",
@@ -97,6 +104,8 @@
     "promptPublic": "عام",
     "feature": "تمييز",
     "featured": "مميز",
+    "unlist": "إلغاء الإدراج",
+    "relist": "إعادة الإدراج",
     "adminArea": "منطقة المسؤول",
     "types": {
       "text": "نص",
@@ -161,6 +170,12 @@
     "mediaUrl": "رابط الوسائط",
     "mediaUrlPlaceholder": "https://...",
     "mediaUrlDescription": "أدخل رابط ملف الوسائط لهذا الأمر",
+    "mediaImage": "صورة الوسائط",
+    "clickToUpload": "انقر لرفع صورة",
+    "uploading": "جارٍ الرفع...",
+    "maxFileSize": "الحد الأقصى لحجم الملف: 5 ميجابايت (JPEG، PNG، GIF، WebP)",
+    "fileTooLarge": "الملف كبير جداً. الحد الأقصى للحجم هو 5 ميجابايت.",
+    "invalidFileType": "نوع ملف غير صالح. يُسمح فقط بـ JPEG و PNG و GIF و WebP.",
     "privateDescription": "الأوامر الخاصة مرئية لك فقط",
     "update": "تحديث",
     "createButton": "إنشاء",

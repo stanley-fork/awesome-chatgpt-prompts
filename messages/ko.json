@@ -74,6 +74,13 @@
   "prompts": {
     "title": "프롬프트",
     "create": "프롬프트 생성",
+    "hfDataStudio": {
+      "button": "HF 데이터 스튜디오",
+      "sqlQuery": "SQL 쿼리",
+      "openDataset": "데이터셋 열기",
+      "runQuery": "HF에서 쿼리 실행",
+      "examples": "예제 쿼리"
+    },
     "edit": "프롬프트 편집",
     "delete": "프롬프트 삭제",
     "myPrompts": "내 프롬프트",
@@ -97,6 +104,8 @@
     "promptPublic": "공개",
     "feature": "추천",
     "featured": "추천됨",
+    "unlist": "숨기기",
+    "relist": "다시 표시",
     "adminArea": "관리자 영역",
     "types": {
       "text": "텍스트",
@@ -154,6 +163,12 @@
     "mediaUrl": "미디어 URL",
     "mediaUrlPlaceholder": "https://...",
     "mediaUrlDescription": "이 프롬프트의 미디어 파일 URL을 입력하세요",
+    "mediaImage": "미디어 이미지",
+    "clickToUpload": "클릭하여 이미지 업로드",
+    "uploading": "업로드 중...",
+    "maxFileSize": "최대 파일 크기: 5MB (JPEG, PNG, GIF, WebP)",
+    "fileTooLarge": "파일이 너무 큽니다. 최대 크기는 5MB입니다.",
+    "invalidFileType": "잘못된 파일 형식입니다. JPEG, PNG, GIF, WebP만 허용됩니다.",
     "privateDescription": "비공개 프롬프트는 본인만 볼 수 있습니다",
     "requiresMediaUpload": "미디어 업로드 필요",
     "requiresMediaUploadDescription": "이 프롬프트를 사용하려면 미디어 파일을 제공해야 합니다",

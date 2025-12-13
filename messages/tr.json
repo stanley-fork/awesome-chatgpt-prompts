@@ -74,6 +74,13 @@
   "prompts": {
     "title": "Promptlar",
     "create": "Prompt Oluştur",
+    "hfDataStudio": {
+      "button": "HF Veri Stüdyosu",
+      "sqlQuery": "SQL Sorgusu",
+      "openDataset": "Veri Setini Aç",
+      "runQuery": "HF'de Sorguyu Çalıştır",
+      "examples": "Örnek Sorgular"
+    },
     "edit": "Prompt Düzenle",
     "delete": "Prompt Sil",
     "myPrompts": "Promptlarım",
@@ -97,6 +104,8 @@
     "promptPublic": "Herkese Açık",
     "feature": "Öne Çıkar",
     "featured": "Öne Çıkan",
+    "unlist": "Listeden Kaldır",
+    "relist": "Listeye Ekle",
     "adminArea": "Yönetici Alanı",
     "types": {
       "text": "Metin",
@@ -154,6 +163,12 @@
     "mediaUrl": "Medya URL",
     "mediaUrlPlaceholder": "https://...",
     "mediaUrlDescription": "Bu prompt için medya dosyasının URL'sini girin",
+    "mediaImage": "Medya Görseli",
+    "clickToUpload": "Görsel yüklemek için tıklayın",
+    "uploading": "Yükleniyor...",
+    "maxFileSize": "Maksimum dosya boyutu: 5MB (JPEG, PNG, GIF, WebP)",
+    "fileTooLarge": "Dosya çok büyük. Maksimum boyut 5MB'dir.",
+    "invalidFileType": "Geçersiz dosya türü. Yalnızca JPEG, PNG, GIF ve WebP'ye izin verilir.",
     "privateDescription": "Özel promptlar yalnızca size görünür",
     "requiresMediaUpload": "Medya Yüklemesi Gerekli",
     "requiresMediaUploadDescription": "Bu promptu kullanmak için medya dosyası gereklidir",

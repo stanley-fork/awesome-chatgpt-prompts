@@ -74,6 +74,13 @@
   "prompts": {
     "title": "Prompts",
     "create": "Créer un Prompt",
+    "hfDataStudio": {
+      "button": "HF Data Studio",
+      "sqlQuery": "Requête SQL",
+      "openDataset": "Ouvrir le Dataset",
+      "runQuery": "Exécuter la Requête sur HF",
+      "examples": "Exemples de Requêtes"
+    },
     "edit": "Modifier le Prompt",
     "delete": "Supprimer le Prompt",
     "myPrompts": "Mes Prompts",
@@ -97,6 +104,8 @@
     "promptPublic": "Public",
     "feature": "Mettre en avant",
     "featured": "En vedette",
+    "unlist": "Retirer",
+    "relist": "Remettre",
     "adminArea": "Zone Admin",
     "types": {
       "text": "Texte",
@@ -154,6 +163,12 @@
     "mediaUrl": "URL du Média",
     "mediaUrlPlaceholder": "https://...",
     "mediaUrlDescription": "Entrez l'URL du fichier média pour ce prompt",
+    "mediaImage": "Image Média",
+    "clickToUpload": "Cliquez pour télécharger une image",
+    "uploading": "Téléchargement...",
+    "maxFileSize": "Taille max: 5Mo (JPEG, PNG, GIF, WebP)",
+    "fileTooLarge": "Fichier trop volumineux. La taille maximale est de 5Mo.",
+    "invalidFileType": "Type de fichier invalide. Seuls JPEG, PNG, GIF et WebP sont autorisés.",
     "privateDescription": "Les prompts privés ne sont visibles que par vous",
     "requiresMediaUpload": "Nécessite un Upload de Média",
     "requiresMediaUploadDescription": "Les utilisateurs doivent fournir des fichiers média pour utiliser ce prompt",
