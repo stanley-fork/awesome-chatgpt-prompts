@@ -1,0 +1,205 @@
+#!/bin/bash
+
+# Script to generate contributor commits from prompts.csv
+# Fetches latest prompts from prompts.chat/prompts.csv
+# Compares with existing prompts.csv and creates commits only for new prompts
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+CSV_FILE="$PROJECT_DIR/prompts.csv"
+REMOTE_CSV="$PROJECT_DIR/prompts.csv.remote"
+REMOTE_CSV_URL="https://prompts.chat/prompts.csv"
+
+# Fetch latest prompts.csv from prompts.chat
+echo "Fetching latest prompts.csv from $REMOTE_CSV_URL..."
+if ! curl -fsSL "$REMOTE_CSV_URL" -o "$REMOTE_CSV"; then
+    echo "Error: Failed to fetch prompts.csv from $REMOTE_CSV_URL"
+    echo "Make sure prompts.chat is running and the endpoint is available."
+    exit 1
+fi
+echo "Successfully fetched remote prompts.csv"
+
+# Initialize local CSV if it doesn't exist
+if [ ! -f "$CSV_FILE" ]; then
+    echo "Local prompts.csv not found, initializing with header..."
+    head -1 "$REMOTE_CSV" > "$CSV_FILE"
+    git add "$CSV_FILE"
+    git commit -m "Initialize prompts.csv with header" --allow-empty 2>/dev/null || true
+fi
+
+echo ""
+echo "Comparing local and remote prompts.csv..."
+
+# Process diffs and create commits for new prompts
+export PROJECT_DIR
+set +e  # Temporarily allow non-zero exit
+python3 << 'PYTHON_SCRIPT'
+import csv
+import subprocess
+import os
+
+project_dir = os.environ.get('PROJECT_DIR', '.')
+csv_file = os.path.join(project_dir, 'prompts.csv')
+remote_csv = os.path.join(project_dir, 'prompts.csv.remote')
+
+# Read existing local prompts (by act title as key)
+local_prompts = {}
+fieldnames = None
+with open(csv_file, 'r') as f:
+    reader = csv.DictReader(f)
+    fieldnames = reader.fieldnames
+    for row in reader:
+        act = row.get('act', '').strip()
+        if act:
+            local_prompts[act] = row
+
+print(f"Found {len(local_prompts)} existing local prompts")
+
+# Read remote prompts
+remote_prompts = []
+with open(remote_csv, 'r') as f:
+    reader = csv.DictReader(f)
+    remote_fieldnames = reader.fieldnames
+    for row in reader:
+        remote_prompts.append(row)
+
+print(f"Found {len(remote_prompts)} remote prompts")
+
+# Use remote fieldnames if local is empty
+if not fieldnames:
+    fieldnames = remote_fieldnames
+
+# Find new and updated prompts
+new_prompts = []
+updated_prompts = []
+
+for row in remote_prompts:
+    act = row.get('act', '').strip()
+    if not act:
+        continue
+    
+    if act not in local_prompts:
+        new_prompts.append(row)
+    else:
+        # Check if content changed (compare all fields except contributor which might differ)
+        local_row = local_prompts[act]
+        # Compare prompt content specifically
+        if row.get('prompt', '').strip() != local_row.get('prompt', '').strip():
+            updated_prompts.append((row, local_row))
+
+print(f"Found {len(new_prompts)} new prompts to add")
+print(f"Found {len(updated_prompts)} updated prompts to modify")
+
+if not new_prompts and not updated_prompts:
+    print("\nNo changes detected. Already up to date!")
+    import sys
+    sys.exit(2)  # Exit code 2 = no changes
+else:
+    # Process updates first (rewrite entire file with updates applied)
+    if updated_prompts:
+        print("\nApplying updates to existing prompts...")
+        
+        # Build updated local_prompts dict
+        for remote_row, _ in updated_prompts:
+            act = remote_row.get('act', '').strip()
+            local_prompts[act] = remote_row
+        
+        # Rewrite the CSV with updates
+        with open(csv_file, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            # Write in order of remote (to maintain order)
+            for row in remote_prompts:
+                act = row.get('act', '').strip()
+                if act in local_prompts:
+                    writer.writerow(local_prompts[act])
+        
+        # Commit updates
+        for i, (remote_row, local_row) in enumerate(updated_prompts, 1):
+            contributor = remote_row.get('contributor', '').strip()
+            act = remote_row.get('act', 'Unknown')
+            
+            if not contributor:
+                contributor = 'anonymous'
+            
+            email = f"{contributor}@users.noreply.github.com"
+            
+            subprocess.run(['git', 'add', csv_file], check=True)
+            
+            env = os.environ.copy()
+            env['GIT_AUTHOR_NAME'] = contributor
+            env['GIT_AUTHOR_EMAIL'] = email
+            env['GIT_COMMITTER_NAME'] = contributor
+            env['GIT_COMMITTER_EMAIL'] = email
+            
+            subprocess.run([
+                'git', 'commit',
+                '-m', f'Update prompt: {act}',
+                f'--author={contributor} <{email}>'
+            ], env=env, check=True)
+            
+            print(f"[UPDATE {i}/{len(updated_prompts)}] {contributor}: {act}")
+    
+    # Process new prompts
+    if new_prompts:
+        print("\nCreating commits for new prompts...")
+        
+        for i, row in enumerate(new_prompts, 1):
+            contributor = row.get('contributor', '').strip()
+            act = row.get('act', 'Unknown')
+            
+            if not contributor:
+                contributor = 'anonymous'
+            
+            email = f"{contributor}@users.noreply.github.com"
+            
+            # Append this row to the CSV
+            with open(csv_file, 'a', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writerow(row)
+            
+            # Stage and commit
+            subprocess.run(['git', 'add', csv_file], check=True)
+            
+            env = os.environ.copy()
+            env['GIT_AUTHOR_NAME'] = contributor
+            env['GIT_AUTHOR_EMAIL'] = email
+            env['GIT_COMMITTER_NAME'] = contributor
+            env['GIT_COMMITTER_EMAIL'] = email
+            
+            subprocess.run([
+                'git', 'commit',
+                '-m', f'Add prompt: {act}',
+                f'--author={contributor} <{email}>'
+            ], env=env, check=True)
+            
+            print(f"[NEW {i}/{len(new_prompts)}] {contributor}: {act}")
+    
+    print(f"\nDone! Created {len(new_prompts)} new commits, {len(updated_prompts)} update commits.")
+
+PYTHON_SCRIPT
+PYTHON_EXIT=$?
+set -e  # Re-enable exit on error
+
+# Clean up
+rm -f "$REMOTE_CSV"
+
+# Exit early if no changes (Python exited with code 2)
+if [ $PYTHON_EXIT -eq 2 ]; then
+    echo ""
+    echo "Nothing to commit or push."
+    exit 0
+fi
+
+# Check for actual Python errors
+if [ $PYTHON_EXIT -ne 0 ]; then
+    echo "Error: Script failed with exit code $PYTHON_EXIT"
+    exit 1
+fi
+
+echo ""
+echo "Review with: git log --oneline prompts.csv"
+echo ""
+echo "To push: git push origin main"
