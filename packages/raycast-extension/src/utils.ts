@@ -193,6 +193,12 @@ export const codePlatforms: Platform[] = [
     supportsQuerystring: true,
   },
   {
+    id: "netlify",
+    name: "Netlify",
+    baseUrl: "https://app.netlify.com/run",
+    supportsQuerystring: true,
+  },
+  {
     id: "bolt",
     name: "Bolt",
     baseUrl: "https://bolt.new",
@@ -278,6 +284,8 @@ export function buildUrl(
       return `${baseUrl}/?prompt=${encoded}`;
     case "lovable":
       return `${baseUrl}/?autosubmit=true#prompt=${encoded}`;
+    case "netlify":
+      return `${baseUrl}?prompt=${encoded}&ref=prompts-chat`;
     case "mistral":
       return `${baseUrl}?q=${encoded}`;
     case "perplexity":
