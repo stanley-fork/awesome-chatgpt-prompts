@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       let user = await db.user.findFirst({
         where: {
           OR: [
-            { username: normalizedUsername },
+            { username: { equals: normalizedUsername, mode: "insensitive" } },
             { email: pseudoEmail },
           ],
         },

@@ -8,6 +8,7 @@ vi.mock("@/lib/db", () => ({
   db: {
     user: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       update: vi.fn(),
     },
   },
@@ -162,7 +163,7 @@ describe("PATCH /api/user/profile", () => {
 
   it("should return 400 if username is taken", async () => {
     vi.mocked(auth).mockResolvedValue({ user: { id: "user1", username: "olduser" } } as never);
-    vi.mocked(db.user.findUnique).mockResolvedValue({ id: "other-user" } as never);
+    vi.mocked(db.user.findFirst).mockResolvedValue({ id: "other-user" } as never);
 
     const request = new Request("http://localhost:3000/api/user/profile", {
       method: "PATCH",
@@ -174,6 +175,26 @@ describe("PATCH /api/user/profile", () => {
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("username_taken");
+  });
+
+  it("should check username case-insensitively", async () => {
+    vi.mocked(auth).mockResolvedValue({ user: { id: "user1", username: "olduser" } } as never);
+    vi.mocked(db.user.findFirst).mockResolvedValue({ id: "other-user" } as never);
+
+    const request = new Request("http://localhost:3000/api/user/profile", {
+      method: "PATCH",
+      body: JSON.stringify({ name: "Test", username: "TakenUser" }),
+    });
+
+    const response = await PATCH(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("username_taken");
+    expect(db.user.findFirst).toHaveBeenCalledWith({
+      where: { username: { equals: "TakenUser", mode: "insensitive" } },
+      select: { id: true },
+    });
   });
 
   it("should allow keeping the same username", async () => {
@@ -197,12 +218,12 @@ describe("PATCH /api/user/profile", () => {
     expect(response.status).toBe(200);
     expect(data.name).toBe("Updated Name");
     // Should NOT check for existing username when keeping the same one
-    expect(db.user.findUnique).not.toHaveBeenCalled();
+    expect(db.user.findFirst).not.toHaveBeenCalled();
   });
 
   it("should update profile successfully", async () => {
     vi.mocked(auth).mockResolvedValue({ user: { id: "user1", username: "olduser" } } as never);
-    vi.mocked(db.user.findUnique).mockResolvedValue(null); // Username not taken
+    vi.mocked(db.user.findFirst).mockResolvedValue(null); // Username not taken
     vi.mocked(db.user.update).mockResolvedValue({
       id: "user1",
       name: "New Name",
@@ -318,7 +339,7 @@ describe("PATCH /api/user/profile", () => {
 
   it("should accept valid username with underscores", async () => {
     vi.mocked(auth).mockResolvedValue({ user: { id: "user1", username: "old" } } as never);
-    vi.mocked(db.user.findUnique).mockResolvedValue(null);
+    vi.mocked(db.user.findFirst).mockResolvedValue(null);
     vi.mocked(db.user.update).mockResolvedValue({
       id: "user1",
       name: "Test",

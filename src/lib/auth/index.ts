@@ -26,7 +26,7 @@ async function generateUsername(email: string, name?: string | null): Promise<st
   // Check if username exists and append number if needed
   let username = baseUsername;
   let counter = 1;
-  while (await db.user.findUnique({ where: { username } })) {
+  while (await db.user.findFirst({ where: { username: { equals: username, mode: "insensitive" } } })) {
     username = `${baseUsername}${counter}`;
     counter++;
   }
@@ -81,7 +81,7 @@ function CustomPrismaAdapter(): Adapter {
         const baseUsername = username;
         let finalUsername = baseUsername;
         let counter = 1;
-        while (await db.user.findUnique({ where: { username: finalUsername } })) {
+        while (await db.user.findFirst({ where: { username: { equals: finalUsername, mode: "insensitive" } } })) {
           finalUsername = `${baseUsername}${counter}`;
           counter++;
         }

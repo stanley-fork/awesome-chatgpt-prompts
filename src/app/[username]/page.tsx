@@ -38,6 +38,7 @@ export async function generateMetadata({ params }: UserProfilePageProps): Promis
     
   const user = await db.user.findFirst({
     where: { username: { equals: username, mode: "insensitive" } },
+    orderBy: { createdAt: "asc" },
     select: { name: true, username: true },
   });
 
@@ -72,6 +73,7 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
 
   const user = await db.user.findFirst({
     where: { username: { equals: username, mode: "insensitive" } },
+    orderBy: { createdAt: "asc" },
     select: {
       id: true,
       name: true,

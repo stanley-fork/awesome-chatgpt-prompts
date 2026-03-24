@@ -46,8 +46,8 @@ export async function PATCH(request: NextRequest) {
 
     // Check if username is taken by another user
     if (username !== session.user.username) {
-      const existingUser = await db.user.findUnique({
-        where: { username },
+      const existingUser = await db.user.findFirst({
+        where: { username: { equals: username, mode: "insensitive" } },
         select: { id: true },
       });
 
