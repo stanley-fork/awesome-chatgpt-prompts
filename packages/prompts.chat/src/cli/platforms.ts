@@ -31,6 +31,7 @@ export const codePlatforms: Platform[] = [
   { id: "goose", name: "Goose", baseUrl: "goose://recipe", isDeeplink: true },
   { id: "github-copilot", name: "GitHub Copilot Chat", baseUrl: "https://github.com/copilot" },
   { id: "github-copilot-agents", name: "GitHub Copilot Agents", baseUrl: "https://github.com/copilot/agents" },
+  { id: "netlify", name: "Netlify", baseUrl: "https://app.netlify.com/run" },
   { id: "bolt", name: "Bolt", baseUrl: "https://bolt.new" },
   { id: "lovable", name: "Lovable", baseUrl: "https://lovable.dev" },
   { id: "v0", name: "v0", baseUrl: "https://v0.dev/chat" },
@@ -103,6 +104,8 @@ export function buildUrl(
       return `${baseUrl}/?prompt=${encoded}`;
     case "lovable":
       return `${baseUrl}/?autosubmit=true#prompt=${encoded}`;
+    case "netlify":
+      return `${baseUrl}?prompt=${encoded}&ref=prompts-chat`;
     case "mistral":
       return `${baseUrl}?q=${encoded}`;
     case "perplexity":

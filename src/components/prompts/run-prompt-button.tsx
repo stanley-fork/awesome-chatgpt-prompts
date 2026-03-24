@@ -91,6 +91,7 @@ const codePlatforms: Platform[] = [
       { name: "Copilot Agents", baseUrl: "https://github.com/copilot/agents" },
     ],
   },
+  { id: "netlify", name: "Netlify", baseUrl: "https://app.netlify.com/run" },
   { id: "bolt", name: "Bolt", baseUrl: "https://bolt.new" },
   { id: "lovable", name: "Lovable", baseUrl: "https://lovable.dev" },
   { id: "v0", name: "v0", baseUrl: "https://v0.dev/chat" },
@@ -173,6 +174,8 @@ function buildUrl(platformId: string, baseUrl: string, promptText: string, promp
       return `${baseUrl}/?prompt=${encoded}`;
     case "lovable":
       return `${baseUrl}/?autosubmit=true#prompt=${encoded}`;
+    case "netlify":
+      return `${baseUrl}?prompt=${encoded}&ref=prompts-chat`;
     case "mistral":
       return `${baseUrl}?q=${encoded}`;
     case "perplexity":
