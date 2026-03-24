@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Prisma } from "@prisma/client";
 import { GET, PATCH } from "@/app/api/user/profile/route";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
@@ -161,9 +162,15 @@ describe("PATCH /api/user/profile", () => {
     expect(data.error).toBe("validation_error");
   });
 
-  it("should return 400 if username is taken", async () => {
+  it("should return 409 if username is taken", async () => {
     vi.mocked(auth).mockResolvedValue({ user: { id: "user1", username: "olduser" } } as never);
-    vi.mocked(db.user.findFirst).mockResolvedValue({ id: "other-user" } as never);
+    vi.mocked(db.user.update).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        meta: { target: ["username"] },
+        clientVersion: "5.0.0",
+      })
+    );
 
     const request = new Request("http://localhost:3000/api/user/profile", {
       method: "PATCH",
@@ -173,28 +180,30 @@ describe("PATCH /api/user/profile", () => {
     const response = await PATCH(request);
     const data = await response.json();
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(409);
     expect(data.error).toBe("username_taken");
   });
 
-  it("should check username case-insensitively", async () => {
+  it("should return 409 for case-insensitive username collision", async () => {
     vi.mocked(auth).mockResolvedValue({ user: { id: "user1", username: "olduser" } } as never);
-    vi.mocked(db.user.findFirst).mockResolvedValue({ id: "other-user" } as never);
+    vi.mocked(db.user.update).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        meta: { target: ["users_username_ci_unique"] },
+        clientVersion: "5.0.0",
+      })
+    );
 
     const request = new Request("http://localhost:3000/api/user/profile", {
       method: "PATCH",
-      body: JSON.stringify({ name: "Test", username: "TakenUser" }),
+      body: JSON.stringify({ name: "Test", username: "takenuser" }),
     });
 
     const response = await PATCH(request);
     const data = await response.json();
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(409);
     expect(data.error).toBe("username_taken");
-    expect(db.user.findFirst).toHaveBeenCalledWith({
-      where: { username: { equals: "TakenUser", mode: "insensitive" } },
-      select: { id: true },
-    });
   });
 
   it("should allow keeping the same username", async () => {
@@ -217,13 +226,12 @@ describe("PATCH /api/user/profile", () => {
 
     expect(response.status).toBe(200);
     expect(data.name).toBe("Updated Name");
-    // Should NOT check for existing username when keeping the same one
-    expect(db.user.findFirst).not.toHaveBeenCalled();
+    // No pre-check needed — uniqueness enforced at DB level
+    expect(db.user.update).toHaveBeenCalled();
   });
 
   it("should update profile successfully", async () => {
     vi.mocked(auth).mockResolvedValue({ user: { id: "user1", username: "olduser" } } as never);
-    vi.mocked(db.user.findFirst).mockResolvedValue(null); // Username not taken
     vi.mocked(db.user.update).mockResolvedValue({
       id: "user1",
       name: "New Name",

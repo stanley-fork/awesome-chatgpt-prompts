@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Prisma } from "@prisma/client";
 import { POST } from "@/app/api/auth/register/route";
 import { db } from "@/lib/db";
 import { getConfig } from "@/lib/config";
@@ -158,14 +159,15 @@ describe("POST /api/auth/register", () => {
   });
 
   describe("duplicate checks", () => {
-    it("should return 400 when email already exists", async () => {
-      // Mock: email check finds existing user
-      vi.mocked(db.user.findUnique).mockImplementation(async (args) => {
-        if (args?.where?.email) {
-          return { id: "1", email: "test@example.com" } as never;
-        }
-        return null;
-      });
+    it("should return 409 when email already exists", async () => {
+      // Mock: create throws P2002 unique violation on email
+      vi.mocked(db.user.create).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+          code: "P2002",
+          meta: { target: ["email"] },
+          clientVersion: "5.0.0",
+        })
+      );
 
       const request = createRequest({
         name: "Test User",
@@ -177,14 +179,43 @@ describe("POST /api/auth/register", () => {
       const response = await POST(request);
       const data = await response.json();
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(409);
       expect(data.error).toBe("email_taken");
     });
 
-    it("should return 400 when username already exists", async () => {
-      // Mock: email check passes, username check (case-insensitive via findFirst) finds existing user
-      vi.mocked(db.user.findUnique).mockResolvedValue(null);
-      vi.mocked(db.user.findFirst).mockResolvedValue({ id: "1", username: "testuser" } as never);
+    it("should return 409 for case-insensitive email collision", async () => {
+      // Mock: create throws P2002 unique violation on CI email index
+      vi.mocked(db.user.create).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+          code: "P2002",
+          meta: { target: ["users_email_ci_unique"] },
+          clientVersion: "5.0.0",
+        })
+      );
+
+      const request = createRequest({
+        name: "Test User",
+        username: "testuser",
+        email: "Test@Example.COM",
+        password: "password123",
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(409);
+      expect(data.error).toBe("email_taken");
+    });
+
+    it("should return 409 when username already exists", async () => {
+      // Mock: create throws P2002 unique violation on username
+      vi.mocked(db.user.create).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+          code: "P2002",
+          meta: { target: ["username"] },
+          clientVersion: "5.0.0",
+        })
+      );
 
       const request = createRequest({
         name: "Test User",
@@ -196,15 +227,52 @@ describe("POST /api/auth/register", () => {
       const response = await POST(request);
       const data = await response.json();
 
+      expect(response.status).toBe(409);
+      expect(data.error).toBe("username_taken");
+    });
+
+    it("should return 400 for uppercase username", async () => {
+      const request = createRequest({
+        name: "Test User",
+        username: "TestUser",
+        email: "test@example.com",
+        password: "password123",
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
       expect(response.status).toBe(400);
+      expect(data.error).toBe("validation_error");
+    });
+
+    it("should return 409 for case-insensitive username collision", async () => {
+      // Mock: create throws P2002 unique violation on CI username index
+      vi.mocked(db.user.create).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+          code: "P2002",
+          meta: { target: ["users_username_ci_unique"] },
+          clientVersion: "5.0.0",
+        })
+      );
+
+      const request = createRequest({
+        name: "Test User",
+        username: "testuser",
+        email: "test@example.com",
+        password: "password123",
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(409);
       expect(data.error).toBe("username_taken");
     });
   });
 
   describe("successful registration", () => {
     it("should create user and return user data", async () => {
-      vi.mocked(db.user.findUnique).mockResolvedValue(null);
-      vi.mocked(db.user.findFirst).mockResolvedValue(null);
       vi.mocked(db.user.create).mockResolvedValue({
         id: "user-123",
         name: "Test User",
@@ -238,9 +306,44 @@ describe("POST /api/auth/register", () => {
       expect(data.password).toBeUndefined(); // Password should not be returned
     });
 
+    it("should lowercase and trim email and username before saving", async () => {
+      vi.mocked(db.user.create).mockResolvedValue({
+        id: "user-123",
+        name: "Test User",
+        username: "testuser",
+        email: "test@example.com",
+        password: "hashed_password",
+        emailVerified: null,
+        image: null,
+        role: "USER",
+        bio: null,
+        credits: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const request = createRequest({
+        name: "  Test User  ",
+        username: "  testuser  ",
+        email: "  Test@Example.COM  ",
+        password: "password123",
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(200);
+
+      expect(db.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: "Test User",
+            username: "testuser",
+            email: "test@example.com",
+          }),
+        })
+      );
+    });
+
     it("should accept valid username with underscores", async () => {
-      vi.mocked(db.user.findUnique).mockResolvedValue(null);
-      vi.mocked(db.user.findFirst).mockResolvedValue(null);
       vi.mocked(db.user.create).mockResolvedValue({
         id: "user-123",
         name: "Test User",

@@ -49,7 +49,7 @@ export default async function OGImage({ params }: { params: Promise<{ username: 
   const username = decodedUsername.slice(1);
 
   const user = await db.user.findFirst({
-    where: { username: { equals: username, mode: "insensitive" } },
+    where: { username: username.toLowerCase() },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,

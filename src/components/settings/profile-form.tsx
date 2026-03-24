@@ -39,7 +39,7 @@ const profileSchema = z.object({
     .string()
     .min(1, "Username is required")
     .max(30)
-    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+    .regex(/^[a-z0-9_]+$/, "Username can only contain lowercase letters, numbers, and underscores"),
   avatar: z.string().url().optional().or(z.literal("")),
   bio: z.string().max(250).optional().or(z.literal("")),
   customLinks: z.array(customLinkSchema).max(5).optional(),
