@@ -12,6 +12,12 @@ import { db } from "@/lib/db";
 import { isValidApiKeyFormat } from "@/lib/api-key";
 import { parseSkillFiles, serializeSkillFiles, DEFAULT_SKILL_FILE } from "@/lib/skill-files";
 import appConfig from "@/../prompts.config";
+import {
+  mcpGeneralLimiter,
+  mcpToolCallLimiter,
+  mcpWriteToolLimiter,
+  mcpAiToolLimiter,
+} from "@/lib/rate-limit";
 
 interface AuthenticatedUser {
   id: string;
@@ -1462,6 +1468,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await server.connect(transport);
 
     const body = await parseBody(req);
+
+    // --- Rate limiting ---
+    const rateLimitId = apiKey || req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+
+    const generalCheck = mcpGeneralLimiter.check(rateLimitId);
+    if (!generalCheck.allowed) {
+      return res.status(429).json({
+        jsonrpc: "2.0",
+        error: { code: -32000, message: `Rate limit exceeded. Try again in ${generalCheck.retryAfterSeconds}s.` },
+        id: null,
+      });
+    }
+
+    // Apply stricter limits for tool calls based on tool name
+    const WRITE_TOOLS = new Set(["save_prompt", "save_skill", "add_file_to_skill", "update_skill_file", "remove_file_from_skill"]);
+    const AI_TOOLS = new Set(["improve_prompt"]);
+
+    const rpcBody = body as { method?: string; params?: { name?: string } };
+    if (rpcBody?.method === "tools/call") {
+      const toolCallCheck = mcpToolCallLimiter.check(rateLimitId);
+      if (!toolCallCheck.allowed) {
+        return res.status(429).json({
+          jsonrpc: "2.0",
+          error: { code: -32000, message: `Tool call rate limit exceeded. Try again in ${toolCallCheck.retryAfterSeconds}s.` },
+          id: null,
+        });
+      }
+
+      const toolName = rpcBody.params?.name;
+      if (toolName && AI_TOOLS.has(toolName)) {
+        const aiCheck = mcpAiToolLimiter.check(rateLimitId);
+        if (!aiCheck.allowed) {
+          return res.status(429).json({
+            jsonrpc: "2.0",
+            error: { code: -32000, message: `AI tool rate limit exceeded (${toolName}). Try again in ${aiCheck.retryAfterSeconds}s.` },
+            id: null,
+          });
+        }
+      } else if (toolName && WRITE_TOOLS.has(toolName)) {
+        const writeCheck = mcpWriteToolLimiter.check(rateLimitId);
+        if (!writeCheck.allowed) {
+          return res.status(429).json({
+            jsonrpc: "2.0",
+            error: { code: -32000, message: `Write tool rate limit exceeded (${toolName}). Try again in ${writeCheck.retryAfterSeconds}s.` },
+            id: null,
+          });
+        }
+      }
+    }
 
     await transport.handleRequest(req, res, body);
 

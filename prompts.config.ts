@@ -61,7 +61,7 @@ export default defineConfig({
     // Enable AI-powered generation features (requires OPENAI_API_KEY)
     aiGeneration: false,
     // Enable MCP (Model Context Protocol) features including API key generation
-    mcp: false,
+    mcp: true,
     // Enable comments on prompts
     comments: true,
   },
