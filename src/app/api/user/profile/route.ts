@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isUniqueConstraintViolation } from "@/lib/db-errors";
 
 const customLinkSchema = z.object({
   type: z.enum(["website", "github", "twitter", "linkedin", "instagram", "youtube", "twitch", "discord", "mastodon", "bluesky", "sponsor"]),
@@ -10,13 +11,12 @@ const customLinkSchema = z.object({
   label: z.string().max(30).optional(),
 });
 
+// Trim before validation to prevent unicode/whitespace tricks that bypass uniqueness checks (e.g. "admin\u200B@x.com" vs "admin@x.com")
+const trimmed = z.preprocess((v) => (typeof v === "string" ? v.trim() : v), z.string());
+
 const updateProfileSchema = z.object({
-  name: z.string().min(1).max(100),
-  username: z
-    .string()
-    .min(1)
-    .max(30)
-    .regex(/^[a-zA-Z0-9_]+$/),
+  name: trimmed.pipe(z.string().min(1).max(100)),
+  username: trimmed.pipe(z.string().min(1).max(30).regex(/^[a-z0-9_]+$/)),
   avatar: z.string().url().optional().or(z.literal("")),
   bio: z.string().max(250).optional().or(z.literal("")),
   customLinks: z.array(customLinkSchema).max(5).optional(),
@@ -44,43 +44,38 @@ export async function PATCH(request: NextRequest) {
 
     const { name, username, avatar, bio, customLinks } = parsed.data;
 
-    // Check if username is taken by another user
-    if (username !== session.user.username) {
-      const existingUser = await db.user.findUnique({
-        where: { username },
-        select: { id: true },
+    // Atomic update — DB-level CI unique index prevents collisions
+    try {
+      const user = await db.user.update({
+        where: { id: session.user.id },
+        data: {
+          name,
+          username,
+          avatar: avatar || null,
+          bio: bio || null,
+          customLinks: customLinks && customLinks.length > 0 ? customLinks : Prisma.DbNull,
+        },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          email: true,
+          avatar: true,
+          bio: true,
+          customLinks: true,
+        },
       });
 
-      if (existingUser && existingUser.id !== session.user.id) {
+      return NextResponse.json(user);
+    } catch (error) {
+      if (isUniqueConstraintViolation(error, "username")) {
         return NextResponse.json(
           { error: "username_taken", message: "This username is already taken" },
-          { status: 400 }
+          { status: 409 }
         );
       }
+      throw error;
     }
-
-    // Update user
-    const user = await db.user.update({
-      where: { id: session.user.id },
-      data: {
-        name,
-        username,
-        avatar: avatar || null,
-        bio: bio || null,
-        customLinks: customLinks && customLinks.length > 0 ? customLinks : Prisma.DbNull,
-      },
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        email: true,
-        avatar: true,
-        bio: true,
-        customLinks: true,
-      },
-    });
-
-    return NextResponse.json(user);
   } catch (error) {
     console.error("Update profile error:", error);
     return NextResponse.json(
