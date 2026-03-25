@@ -232,7 +232,7 @@ export default async function PromptPage({ params }: PromptPageProps) {
   }
 
   // Check if user can view private prompt
-  if (prompt.isPrivate && prompt.authorId !== session?.user?.id) {
+  if (!canViewPrompt(prompt, session)) {
     notFound();
   }
 
