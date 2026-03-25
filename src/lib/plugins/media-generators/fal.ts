@@ -24,6 +24,29 @@ import type {
 
 const FAL_QUEUE_BASE = "https://queue.fal.run";
 
+const ALLOWED_FAL_HOSTS = new Set([
+  "queue.fal.run",
+  "fal.run",
+]);
+
+/**
+ * Validate that a URL points to a trusted Fal.ai origin.
+ *
+ * Prevents SSRF by ensuring user-controlled tokens cannot redirect
+ * authenticated requests to arbitrary servers.
+ */
+export function assertFalOrigin(url: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("Invalid Fal.ai URL");
+  }
+  if (parsed.protocol !== "https:" || !ALLOWED_FAL_HOSTS.has(parsed.hostname)) {
+    throw new Error("Invalid Fal.ai URL: untrusted origin");
+  }
+}
+
 function parseModels(envVar: string | undefined, type: "image" | "video" | "audio"): MediaGeneratorModel[] {
   if (!envVar) return [];
   return envVar
@@ -112,6 +135,8 @@ async function submitToFalQueue(
 export async function getFalRequestStatus(
   statusUrl: string
 ): Promise<FalStatusResponse> {
+  assertFalOrigin(statusUrl);
+
   const apiKey = process.env.FAL_API_KEY;
   if (!apiKey) throw new Error("FAL_API_KEY is not configured");
 
@@ -136,6 +161,8 @@ export async function getFalRequestStatus(
 export async function getFalRequestResult(
   responseUrl: string
 ): Promise<FalImageOutput | FalVideoOutput | FalAudioOutput> {
+  assertFalOrigin(responseUrl);
+
   const apiKey = process.env.FAL_API_KEY;
   if (!apiKey) throw new Error("FAL_API_KEY is not configured");
 
