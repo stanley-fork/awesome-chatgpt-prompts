@@ -201,6 +201,7 @@ export function getLanguageFromFilename(filename: string): string {
 export function sanitizeFilename(filename: string): string | null {
   const trimmed = filename.trim();
   if (!trimmed) return null;
+  if (/[\x00-\x1F\x7F]/.test(trimmed)) return null;
   if (trimmed.includes("..")) return null;
   if (trimmed.startsWith("/") || trimmed.endsWith("/")) return null;
   if (trimmed.includes("//")) return null;

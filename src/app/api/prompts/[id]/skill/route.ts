@@ -55,16 +55,16 @@ export async function GET(
 
   // Add each file to the zip (sanitize filenames to prevent Zip Slip)
   for (const file of files) {
-    const safeName = sanitizeFilename(file.filename)
-      ?? file.filename
-        .split("/")
-        .filter(segment => segment !== ".." && segment !== ".")
-        .join("/")
-        .replace(/^\/+/, "");
-
-    if (safeName) {
-      zip.file(safeName, file.content);
+    const candidate = file.filename
+      .replace(/\\/g, "/")
+      .split("/")
+      .filter((segment) => segment && segment !== "." && segment !== "..")
+      .join("/");
+    const safeName = sanitizeFilename(candidate);
+    if (!safeName) {
+      continue;
     }
+    zip.file(safeName, file.content);
   }
 
   // Generate the zip content as blob for Response compatibility
