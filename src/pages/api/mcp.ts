@@ -25,9 +25,18 @@ interface AuthenticatedUser {
   mcpPromptsPublicByDefault: boolean;
 }
 
+// In-memory auth cache for warm function instances (5-min TTL)
+const authCache = new Map<string, { user: AuthenticatedUser | null; expiry: number }>();
+const AUTH_CACHE_TTL = 5 * 60 * 1000;
+
 async function authenticateApiKey(apiKey: string | null): Promise<AuthenticatedUser | null> {
   if (!apiKey || !isValidApiKeyFormat(apiKey)) {
     return null;
+  }
+
+  const cached = authCache.get(apiKey);
+  if (cached && Date.now() < cached.expiry) {
+    return cached.user;
   }
 
   const user = await db.user.findUnique({
@@ -39,6 +48,7 @@ async function authenticateApiKey(apiKey: string | null): Promise<AuthenticatedU
     },
   });
 
+  authCache.set(apiKey, { user, expiry: Date.now() + AUTH_CACHE_TTL });
   return user;
 }
 
@@ -182,7 +192,6 @@ function createServer(options: ServerOptions = {}) {
         slug: true,
         title: true,
         description: true,
-        content: true,
       },
     });
 
@@ -191,16 +200,10 @@ function createServer(options: ServerOptions = {}) {
 
     return {
       prompts: results.map((p) => {
-        const variables = extractVariables(p.content);
         return {
           name: getPromptName(p),
           title: p.title,
           description: p.description || undefined,
-          arguments: variables.map((v) => ({
-            name: v.name,
-            description: v.defaultValue ? `Default: ${v.defaultValue}` : undefined,
-            required: !v.defaultValue,
-          })),
         };
       }),
       nextCursor: hasMore ? String(page + 1) : undefined,
@@ -225,15 +228,15 @@ function createServer(options: ServerOptions = {}) {
         select: promptSelect,
       });
     }
-    // Fallback: lookup by slugified title (for prompts without stored slug)
+    // Fallback: lookup by title for prompts without stored slug
+    // Uses indexed DB query instead of loading 500 rows into memory
     // TODO: Backfill slug column for all existing prompts so this fallback can be removed
     if (!prompt) {
-      const unslugged = await db.prompt.findMany({
-        where: { ...promptFilter, slug: null },
+      const titleGuess = promptSlug.replace(/-/g, " ");
+      prompt = await db.prompt.findFirst({
+        where: { ...promptFilter, slug: null, title: { contains: titleGuess, mode: "insensitive" } },
         select: promptSelect,
-        take: 500,
       });
-      prompt = unslugged.find((p) => slugify(p.title) === promptSlug) || null;
     }
 
     if (!prompt) {
@@ -342,7 +345,7 @@ function createServer(options: ServerOptions = {}) {
           slug: getPromptName(p),
           title: p.title,
           description: p.description,
-          contentPreview: p.content.substring(0, 1000) + (p.content.length > 1000 ? '...' : ''),
+          contentPreview: p.content.substring(0, 300) + (p.content.length > 300 ? '...' : ''),
           type: p.type,
           author: p.author.name || p.author.username,
           category: p.category?.name || null,
