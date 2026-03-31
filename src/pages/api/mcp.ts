@@ -1386,64 +1386,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: "MCP is not enabled" });
   }
 
+  // Per MCP Streamable HTTP spec, GET is for opening an SSE stream.
+  // This server is stateless and doesn't push notifications, so return 405.
+  // See: https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#listening-for-messages-from-the-server
   if (req.method === "GET") {
-    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
-    return res.status(200).json({
-      name: "prompts-chat",
-      version: "1.0.0",
-      description: "MCP server for prompts.chat - Search and discover AI prompts",
-      protocol: "Model Context Protocol (MCP)",
-      capabilities: {
-        tools: true,
-        prompts: true,
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(405).json({
+      jsonrpc: "2.0",
+      error: {
+        code: -32000,
+        message: "Method not allowed. This MCP server does not support SSE. Use POST for JSON-RPC requests.",
       },
-      tools: [
-        {
-          name: "search_prompts",
-          description: "Search for AI prompts by keyword.",
-        },
-        {
-          name: "get_prompt",
-          description: "Get a prompt by ID with variable elicitation support.",
-        },
-        {
-          name: "save_prompt",
-          description: "Save a new prompt (requires API key authentication).",
-        },
-        {
-          name: "improve_prompt",
-          description: "Transform a basic prompt into a well-structured, comprehensive prompt using AI.",
-        },
-        {
-          name: "save_skill",
-          description: "Save a new Agent Skill with multiple files (requires API key authentication).",
-        },
-        {
-          name: "add_file_to_skill",
-          description: "Add a file to an existing Agent Skill (requires API key authentication).",
-        },
-        {
-          name: "update_skill_file",
-          description: "Update an existing file in an Agent Skill (requires API key authentication).",
-        },
-        {
-          name: "remove_file_from_skill",
-          description: "Remove a file from an Agent Skill (requires API key authentication).",
-        },
-        {
-          name: "get_skill",
-          description: "Get an Agent Skill by ID with all its files.",
-        },
-        {
-          name: "search_skills",
-          description: "Search for Agent Skills by keyword.",
-        },
-      ],
-      prompts: {
-        description: "All public prompts are available as MCP prompts. Use prompts/list to browse and prompts/get to retrieve with variable substitution.",
-        usage: "Access via slash commands in MCP clients (e.g., /prompt-id)",
-      },
-      endpoint: "/api/mcp",
+      id: null,
     });
   }
 
