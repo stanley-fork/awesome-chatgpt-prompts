@@ -350,7 +350,7 @@ server {
 
 ### Caddy
 
-```
+```caddyfile
 prompts.example.com {
     reverse_proxy localhost:4444
 }

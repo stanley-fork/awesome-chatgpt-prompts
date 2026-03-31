@@ -17,7 +17,9 @@ until node -e "
   const net = require('net');
   const url = new URL(process.env.DATABASE_URL);
   const sock = net.createConnection({ host: url.hostname, port: url.port || 5432 });
-  sock.on('connect', () => { sock.destroy(); process.exit(0); });
+  sock.setTimeout(2000);
+  sock.on('connect', () => { sock.setTimeout(0); sock.destroy(); process.exit(0); });
+  sock.on('timeout', () => { sock.destroy(); process.exit(1); });
   sock.on('error', () => process.exit(1));
 " 2>/dev/null; do
   RETRY_COUNT=$((RETRY_COUNT + 1))
