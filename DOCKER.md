@@ -312,14 +312,24 @@ docker compose exec -T db psql -U prompts prompts < backup.sql
 
 ## Resource Requirements
 
-Minimum:
+**Runtime** (after first build):
 - 1 CPU core
 - 1GB RAM
 - 2GB disk space
 
-Recommended:
+**First-run build** (Next.js compilation on startup):
+- 1 CPU core
+- Higher memory required (OOM may occur with low limits)
+- 2GB disk space
+
+> ⚠️ If you see `Killed` followed by `exited with code 137` during first startup,
+> your Docker container likely ran out of memory during the build step.
+> Increasing Docker's memory allocation (e.g., ~4GB or more) can help resolve this.
+> On Docker Desktop: Settings → Resources → Memory.
+
+**Recommended for production:**
 - 2 CPU cores
-- 2GB RAM
+- 2GB RAM (runtime)
 - 10GB disk space
 
 ## Running Behind a Reverse Proxy
