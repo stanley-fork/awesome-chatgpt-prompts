@@ -306,11 +306,32 @@ export async function POST(request: Request) {
 }
 
 // List prompts (for API access)
+const MAX_API_PER_PAGE = 100;
+const DEFAULT_API_PER_PAGE = 24;
+const MAX_API_PAGE = 10000;
+const DEFAULT_API_PAGE = 1;
+
+const parsePositiveInt = (
+  value: string | null,
+  defaultValue: number,
+  maxValue: number
+): number => {
+  const parsed = Number.parseInt(value ?? "", 10);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return defaultValue;
+  }
+  return Math.min(parsed, maxValue);
+};
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const perPage = parseInt(searchParams.get("perPage") || "24");
+    const page = parsePositiveInt(searchParams.get("page"), DEFAULT_API_PAGE, MAX_API_PAGE);
+    const perPage = parsePositiveInt(
+      searchParams.get("perPage"),
+      DEFAULT_API_PER_PAGE,
+      MAX_API_PER_PAGE
+    );
     const type = searchParams.get("type");
     const categoryId = searchParams.get("category");
     const tag = searchParams.get("tag");
