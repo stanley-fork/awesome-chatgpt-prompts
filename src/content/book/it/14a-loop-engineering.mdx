@@ -1,0 +1,405 @@
+L'ingegneria del contesto decide **cosa può vedere il modello**. L'ingegneria del loop decide **cosa farà il sistema dopo**.
+
+Invece di una persona che legge ripetutamente una risposta e scrive il messaggio successivo, un ciclo trasforma il lavoro di follow-up in un sistema progettato. Assegna un obiettivo all’intelligenza artificiale, la lascia agire, osserva il feedback reale, valuta il risultato e si adatta o si ferma.
+
+<Callout type="info" title="La breve definizione">
+L'ingegneria del loop è la pratica di progettare il ciclo di feedback attorno a un sistema di intelligenza artificiale: obiettivo, azioni, osservazioni, valutazione, stato, guardrail e regole di arresto che spostano il lavoro verso un risultato verificabile.
+</Callout>
+
+## Da un buon suggerimento a un buon loop
+
+Un prompt può produrre un primo tentativo efficace. Un ciclo è utile quando non è possibile conoscere in anticipo il numero di passaggi, l'ambiente può cambiare o il primo tentativo deve essere confrontato con prove.
+
+<Compare
+  before={{
+    label: "Richiesta One-Shot",
+    content: "Chiedi → Genera → Invio\n\nIl modello produce una risposta. Una persona decide se ha funzionato e scrive il messaggio successivo."
+  }}
+  after={{
+    label: "Ciclo ingegnerizzato",
+    content: "Inquadra → Agisci → Osserva → Valuta → Adatta\n                 ↑______________________↓\n\nIl sistema raccoglie prove, registra lo stato e continua solo finché è utile un altro passaggio."
+  }}
+/>
+
+Questa idea si basa su modelli di agenti precedenti. Il [documento ReAct](https://arxiv.org/abs/2210.03629) ha mostrato il valore dell'interlacciamento delle azioni con osservazioni provenienti da un ambiente esterno. Il [modello valutatore-ottimizzatore](https://www.anthropic.com/engineering/building-effective-agents) di Anthropic aggiunge un passaggio di feedback distinto, mentre la [guida pratica agli agenti](https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/) di OpenAI descrive le esecuzioni degli agenti come cicli governati da condizioni di uscita. Il termine più recente **ingegneria del circuito** concentra l'attenzione sulla progettazione deliberata dell'intero ciclo.
+
+## Le cinque mosse
+
+<InfoGrid items={[
+  { label: "1. Cornice", description: "Trasforma l'intento in un obiettivo, vincoli, criteri di successo e un budget.", color: "blue" },
+  { label: "2. Agire", description: "Scegli un'azione limitata: cerca, modifica, calcola, chiama uno strumento o chiedi a una persona.", color: "amber" },
+  { label: "3. Osserva", description: "Raccogli cosa è realmente accaduto: output del test, risultati API, citazioni o feedback degli utenti.", color: "cyan" },
+  { label: "4. Valutare", description: "Confrontare le prove con criteri espliciti, non con la fiducia del modello.", color: "purple" },
+  { label: "5. Adattarsi", description: "Aggiorna lo stato, modifica il piano, riprova in sicurezza, intensifica o interrompi.", color: "green" },
+]} />
+
+Il loop non sono le frecce. L'ingegneria vive nei **contratti tra le frecce**: cosa conta come azione, quali osservazioni sono affidabili, chi le valuta, quale stato sopravvive ed esattamente quando termina l'esecuzione.
+
+<LoopEngineeringLab content={{
+  eyebrow: "Controllo del loop/simulatore interattivo",
+  title: "Passa attraverso un ciclo di feedback funzionante",
+  description: "Scegli un'attività, quindi avanza un segnale alla volta. Si noti come il progresso derivi da prove ambientali e valutazioni esplicite, non dal chiedere al modello se sembra finito.",
+  chooseScenarioLabel: "Scegli un ciclo",
+  goalLabel: "Obiettivo",
+  stopRuleLabel: "Ferma la regola",
+  evidenceLabel: "Prove attendibili",
+  iterationLabel: "Iterazione",
+  progressLabel: "Progresso verificato",
+  openIssuesLabel: "Questioni aperte",
+  currentSignalLabel: "Segnale corrente",
+  advanceLabel: "Avanzare di un passo",
+  nextIterationLabel: "Inizia l'iterazione successiva",
+  resetLabel: "Reimposta il ciclo",
+  completeLabel: "Obiettivo verificato",
+  completeDescription: "I criteri di successo sono soddisfatti, le prove vengono registrate e il ciclo si interrompe invece di trascorrere un altro ciclo.",
+  stages: [
+    { id: "frame", label: "Telaio", verb: "Rileggi il contratto" },
+    { id: "act", label: "Atto", verb: "Esegui una mossa limitata" },
+    { id: "observe", label: "Osservare", verb: "Leggi il feedback esterno" },
+    { id: "evaluate", label: "Valutare", verb: "Applicare la rubrica" },
+    { id: "adapt", label: "Adattare", verb: "Aggiorna la prossima mossa" },
+  ],
+  scenarios: [
+    {
+      id: "code",
+      label: "Riparare un bug di pagamento",
+      goal: "Correggi i totali del checkout senza modificare il comportamento di sconto valido.",
+      stopRule: "I passaggi di regressione mirati, i passaggi completi della suite di pagamento e la lanugine sono puliti oppure si interrompono dopo tre tentativi e si intensifica.",
+      evidence: "Passaggi di riproduzione, output del test, differenze del codice e suite di regressione finale.",
+      cycles: [
+        {
+          action: "Riprodurre il totale riportato e aggiungere un test negativo per l'imposta più lo sconto percentuale.",
+          observation: "Il test fallisce di un centesimo solo quando l’imposta viene arrotondata prima dell’applicazione dello sconto.",
+          evaluation: "Il bug viene riprodotto con un segnale deterministico, ma la sua origine non è stata ancora risolta.",
+          adaptation: "Esaminare il limite di arrotondamento e modificare solo il percorso di calcolo del totale dell'ordine.",
+          progress: 34,
+          openIssues: 2,
+        },
+        {
+          action: "Sposta l'arrotondamento al limite monetario finale ed esegui test di pagamento mirati.",
+          observation: "La regressione viene superata, ma un test di integrazione dei coupon ora fallisce su uno sconto a importo fisso.",
+          evaluation: "Il primo sintomo è stato risolto, ma il cambiamento è troppo ampio. La regola dello stop non è soddisfatta.",
+          adaptation: "Restringere la patch e aggiungere un caso che separi l'arrotondamento fiscale dall'arrotondamento delle cedole.",
+          progress: 71,
+          openIssues: 1,
+        },
+        {
+          action: "Applicare la correzione del calcolo ristretto, quindi eseguire la regressione, la suite di checkout completa e lint.",
+          observation: "Tutti i controlli passano. La differenza tocca una funzione di calcolo e il nuovo test di regressione.",
+          evaluation: "Ogni criterio di successo ha prove indipendenti e non è stato superato alcun limite di budget.",
+          adaptation: "Fermati, conserva l'output del test e consegna la piccola differenza a un revisore umano.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+    {
+      id: "research",
+      label: "Verificare un'affermazione di ricerca",
+      goal: "Valuta l’affermazione secondo cui il lavoro a distanza aumenta sempre la produttività del team.",
+      stopRule: "Raggiungere una conclusione calibrata supportata da almeno tre fonti credibili, indicando disaccordi e limitazioni.",
+      evidence: "Collegamenti diretti alle fonti, date di pubblicazione, metodi di studio, dimensioni del campione e metriche citate.",
+      cycles: [
+        {
+          action: "Cerca prove recenti e rintraccia la statistica sulla produttività più ripetuta fino alla sua fonte.",
+          observation: "La maggior parte degli articoli ripete un sondaggio tra i fornitori senza collegare il relativo questionario o campione grezzo.",
+          evaluation: "Le prove sono popolari ma non abbastanza forti da supportare un’affermazione assoluta.",
+          adaptation: "Dare priorità agli studi sottoposti a revisione paritaria e ai set di dati pubblici; cercare anche risultati contrari.",
+          progress: 28,
+          openIssues: 3,
+        },
+        {
+          action: "Confrontare due studi sottoposti a revisione paritaria con un set di dati sul lavoro nazionale.",
+          observation: "I risultati variano in base al tipo di attività, al metodo di misurazione e al fatto che il lavoro sia completamente remoto o ibrido.",
+          evaluation: "La parola \"sempre\" è contraddetta. Una conclusione condizionale sta diventando difendibile.",
+          adaptation: "Verificare se gli studi distinguono tra output, ore lavorate e produttività percepita.",
+          progress: 68,
+          openIssues: 1,
+        },
+        {
+          action: "Costruisci una tabella delle prove e verifica ogni affermazione rispetto alla fonte originale.",
+          observation: "Le fonti supportano effetti contrastanti e identificano l’autonomia, il coordinamento e il tipo di attività come variabili chiave.",
+          evaluation: "La conclusione è supportata, l’incertezza è visibile e la soglia della fonte è soddisfatta.",
+          adaptation: "Fermati con una risposta qualificata e conserva la tabella delle prove per la revisione.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+    {
+      id: "writing",
+      label: "Lucidare un'e-mail di lancio",
+      goal: "Crea un'e-mail di lancio concisa che spieghi i vantaggi e ottenga clic demo qualificati.",
+      stopRule: "Supera la rubrica vocale, rimani sotto le 140 parole, conteni un chiaro invito all'azione e sopravvivi a una revisione fattuale.",
+      evidence: "Conteggio delle parole, punteggi delle rubriche, convalida dei collegamenti, informazioni sul prodotto di origine e note del revisore.",
+      cycles: [
+        {
+          action: "Disegna il brief del prodotto e valuta il risultato rispetto al pubblico e alla rubrica vocale.",
+          observation: "La bozza è di 204 parole, si apre con funzionalità e contiene due inviti all'azione concorrenti.",
+          evaluation: "I fatti sono accurati, ma la gerarchia e i criteri di lunghezza falliscono.",
+          adaptation: "Guida con il risultato del cliente, rimuovi l'azione secondaria e taglia i dettagli dell'implementazione.",
+          progress: 41,
+          openIssues: 3,
+        },
+        {
+          action: "Riscrivi l'apertura e comprimi il corpo in una sequenza a prova di problema-beneficio.",
+          observation: "L'e-mail è composta da 126 parole e contiene un CTA, ma la frase di prova sovrastima un risultato beta.",
+          evaluation: "La struttura passa. La calibrazione fattuale continua a fallire nella rubrica.",
+          adaptation: "Sostituisci l'affermazione generica con il risultato beta misurato e richiedi un fact check finale.",
+          progress: 79,
+          openIssues: 1,
+        },
+        {
+          action: "Inserisci la metrica verificata, convalida il collegamento ed esegui nuovamente la rubrica completa.",
+          observation: "L'e-mail è composta da 132 parole, il collegamento si risolve, i fatti corrispondono al brief e ogni elemento della rubrica passa.",
+          evaluation: "L'artefatto soddisfa la barra di qualità definita con prove rivedibili.",
+          adaptation: "Interrompi e invia la versione approvata al proprietario della campagna.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+  ],
+}} />
+
+## Scrivi prima il contratto di loop
+
+Prima di scegliere un modello o una struttura, scrivi un piccolo contratto. Se questi campi sono vaghi, il ciclo trasformerà l’ambiguità in costi ripetuti.
+
+```yaml
+goal: "Quale stato osservabile dovrebbe diventare vero?"
+inputs: "Cosa dà inizio al ciclo?"
+state: "Quali fatti e tentativi persistono tra le iterazioni?"
+actions: "Quali strumenti può utilizzare il sistema e con quali autorizzazioni?"
+observations: "Quali segnali esterni ritornano da quelle azioni?"
+evaluator: "Quali rubriche o controlli deterministici giudicano il risultato?"
+success: "Quali prove dimostrano che l’obiettivo è stato raggiunto?"
+failure: "Quali condizioni richiedono il recupero o l’aiuto umano?"
+budget: "Turni massimi, tempo, gettoni, denaro o effetti collaterali"
+```
+
+<Callout type="warning" title="Un ciclo senza uscita è una modalità di fallimento">
+Definire sempre tre uscite: **successo** quando le prove soddisfano l'obiettivo, **fallimento** quando il recupero non è più utile e **budget esaurito** quando il ciclo raggiunge il limite di costo o rischio consentito.
+</Callout>
+
+## Le osservazioni devono provenire dal mondo
+
+Il modello che dice “questo sembra corretto” non è una prova forte. Un'osservazione utile è prodotta da qualcosa al di fuori della risposta giudicata.
+
+<table>
+  <thead>
+    <tr>
+      <th>Compito</th>
+      <th>Osservazione debole</th>
+      <th>Osservazione forte</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Riparazione del codice</td>
+      <td>"La soluzione dovrebbe funzionare."</td>
+      <td>L'errore originale viene riprodotto, quindi la regressione e l'intera suite vengono superate.</td>
+    </tr>
+    <tr>
+      <td>Ricerca</td>
+      <td>"Diverse fonti concordano."</td>
+      <td>Le affermazioni si collegano a fonti originali con date, metodi e disaccordi registrati.</td>
+    </tr>
+    <tr>
+      <td>Estrazione dei dati</td>
+      <td>"Il JSON sembra valido."</td>
+      <td>I passaggi di convalida dello schema e i record campionati corrispondono all'origine.</td>
+    </tr>
+    <tr>
+      <td>Contenuto</td>
+      <td>"Il testo sembra chiaro."</td>
+      <td>Supera una rubrica denominata, una revisione fattuale, controlli dei collegamenti e test del pubblico.</td>
+    </tr>
+    <tr>
+      <td>Operazioni</td>
+      <td>"La richiesta è riuscita."</td>
+      <td>Il sistema esterno restituisce lo stato previsto ed esiste un record di controllo.</td>
+    </tr>
+  </tbody>
+</table>
+
+Ecco perché gli strumenti sono importanti: test, browser, database, validatori e revisione umana trasformano un'ipotesi interna in un risultato osservabile.
+
+## Separare il creatore dalla pedina
+
+Per i lavori a basso rischio, un modello può essere redatto e sottoposto a revisione autonoma. Per lavori importanti, utilizzare una pedina con un lavoro diverso e autorità limitata.
+
+<InfoGrid columns={2} items={[
+  { label: "Creatore", description: "Propone il cambiamento, invoca strumenti di azione e spiega quali prove dovrebbero essere raccolte.", color: "amber" },
+  { label: "Controllore", description: "Riceve l'obiettivo, l'artefatto e le prove; applica la rubrica; non può riscrivere silenziosamente il lavoro che valuta.", color: "green" },
+]} />
+
+La pedina non deve necessariamente essere un'altra IA. Preferisci il valutatore più deterministico disponibile:
+
+1. **Controlli esatti**: tipi, schemi, vincoli, autorizzazioni, hash
+2. **Controlli eseguibili**: test, linter, simulazioni, convalida dei collegamenti
+3. **Controlli delle rubriche**: un modello indipendente o un essere umano che utilizza criteri denominati
+4. **Controlli dei risultati**: comportamento reale degli utenti o parametri di produzione nel tempo
+
+<Callout type="tip" title="La fiducia non è una prova">
+Un punteggio di confidenza generato dallo stesso modello che ha creato l'artefatto è ancora un output del modello. Trattalo come un suggerimento di routing, non come una prova.
+</Callout>
+
+## Lo Stato è la spina dorsale del ciclo
+
+Il contesto è ciò che il modello vede **in questo turno**. Lo Stato è il registro compatto che consente di continuare la svolta successiva senza ripetere o dimenticare il lavoro.
+
+<Checklist title="Stato del ciclo utile" items={[
+  { text: "L’obiettivo attuale e i criteri di accettazione" },
+  { text: "Azioni già tentate e relativi risultati osservabili" },
+  { text: "Artefatti prodotti, con versioni o riferimenti stabili" },
+  { text: "Verdetti dei valutatori e questioni irrisolte" },
+  { text: "Budget consumato e autorizzazioni ancora disponibili" },
+  { text: "Il motivo per continuare, interrompere o intensificare" },
+]} />
+
+Archivia decisioni e prove concise, non la catena di pensiero privata di un modello. Il buono stato è piccolo, ispezionabile e sicuro da riprendere.
+
+## Forme di loop comuni
+
+### Il ciclo di riparazione
+
+`riproduci → cambia una cosa → esegui controlli → diagnostica → ripeti o interrompi
+
+Ideale per codice, configurazione, pulizia dei dati e qualsiasi attività con feedback eseguibile.
+
+### Il ciclo valutatore-ottimizzatore
+
+`genera → valuta con una rubrica → restituisce un feedback mirato → rivede`
+
+Ideale per la scrittura, la traduzione, la critica progettuale e i risultati la cui qualità migliora attraverso un feedback articolato.
+
+### Il ciclo della ricerca
+
+`cerca → esamina le fonti → identifica lacune o conflitti → cerca di nuovo → sintetizza`
+
+Meglio quando la completezza non è nota in anticipo. La regola di stop dovrebbe misurare la copertura delle prove, non il numero di risultati della ricerca.
+
+### Il circuito controllato dall’uomo
+
+"preparare → verificare automaticamente → mettere in pausa prima di un'azione ad alto rischio → l'utente approva o reindirizza".
+
+Ideale per pagamenti, pubblicazione, cancellazione, modifiche di accesso, decisioni mediche o legali e altre azioni consequenziali.
+
+## Modalità di fallimento da progettare
+
+<table>
+  <thead>
+    <tr>
+      <th>Fallimento</th>
+      <th>Cosa è successo</th>
+      <th>Risposta tecnica</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Riprova infinita</td>
+      <td>Il ciclo non ha alcun successo misurabile o uscita dal budget.</td>
+      <td>Aggiungi stati terminali espliciti e un limite rigido di iterazione.</td>
+    </tr>
+    <tr>
+      <td>Autocompiacimento</td>
+      <td>Il produttore accetta la propria risposta plausibile senza prove.</td>
+      <td>Utilizza controlli deterministici o un controllo indipendente.</td>
+    </tr>
+    <tr>
+      <td>Palla di neve del contesto</td>
+      <td>Ogni iterazione aggiunge tutto finché il modello non perde il segnale.</td>
+      <td>Mantieni lo stato strutturato e ricostruisci solo il contesto rilevante.</td>
+    </tr>
+    <tr>
+      <td>Fantastico</td>
+      <td>Il ciclo si alterna tra due correzioni.</td>
+      <td>Rileva stati ripetuti e richiede una strategia o un'escalation diversa.</td>
+    </tr>
+    <tr>
+      <td>Deriva dell'obiettivo</td>
+      <td>I miglioramenti locali sostituiscono l'obiettivo originale.</td>
+      <td>Rileggi l'obiettivo immutabile e i criteri di accettazione ad ogni ciclo.</td>
+    </tr>
+    <tr>
+      <td>Ripetizione non sicura</td>
+      <td>Un errore reversibile diventa dannoso se ripetuto.</td>
+      <td>Limita autorizzazioni, effetti collaterali, velocità, spesa e raggio di esplosione.</td>
+    </tr>
+  </tbody>
+</table>
+
+## Un'implementazione minima
+
+```typescript
+let state = initialize(goal, acceptanceCriteria, budget);
+
+while (state.budget.remaining > 0) {
+  const context = assembleRelevantContext(state);
+  const proposedAction = await maker.chooseAction(context);
+  const observation = await tools.executeWithinPolicy(proposedAction);
+  const verdict = await evaluator.check({ goal, observation, state });
+
+  state = recordIteration(state, { proposedAction, observation, verdict });
+
+  if (verdict.status === "passed") return complete(state);
+  if (verdict.status === "unsafe" || verdict.status === "blocked") {
+    return escalateToHuman(state);
+  }
+
+  state = adaptPlan(state, verdict.feedback);
+}
+
+return stopWithBudgetReport(state);
+```
+
+Il codice è la parte facile. Le domande difficili sono domande di dominio: quale test dimostra che il bug è scomparso? Quale fonte è autorevole? Quale azione è reversibile? Chi può approvare il passaggio finale? Tali decisioni sono il vero lavoro dell’ingegneria del loop.
+
+## Esercizio: Progettare un circuito
+
+<TryIt
+  title="Redigere un contratto ad anello"
+  description="Sostituisci le variabili con un'attività ricorrente del tuo lavoro. Chiedi all'intelligenza artificiale di contestare prove deboli e regole di arresto ambigue."
+  prompt={`Progetta un ciclo di lavoro AI limitato per questa attività:
+
+COMPITO: \${task:classificare ogni mattina i nuovi problemi di assistenza clienti}
+
+Definire:
+1. L'obiettivo osservabile
+2. Il trigger e gli input richiesti
+3. Azioni consentite e autorizzazioni dello strumento
+4. Osservazioni attendibili dall'ambiente esterno
+5. Il valutatore e la sua rubrica
+6. Stato che persiste tra le iterazioni
+7. Successo, fallimento e uscite con budget esaurito
+8. Cancelli di approvazione umana per azioni rischiose
+9. Un formato di traccia che rende verificabile ogni iterazione
+
+Quindi identifica le tre modalità di guasto più probabili nel tuo progetto e rivedi il ciclo per prevenirle.`}
+/>
+
+<Quiz
+  question="Un agente modifica il codice, rilegge il diff e dice che il bug è stato corretto. Qual è la parte mancante più importante del ciclo?"
+  options={[
+    "Un prompt di sistema più lungo",
+    "Un'osservazione esterna valutata rispetto a una regola di stop",
+    "Un secondo passaggio di editing",
+    "Una finestra di contesto più ampia"
+  ]}
+  correctIndex={1}
+  explanation="L'agente ha prodotto e ispezionato un manufatto, ma non ha raccolto prove indipendenti. La riproduzione dell'errore e l'esecuzione di test pertinenti creerebbero un segnale osservabile che una regola di arresto può valutare."
+/>
+
+## Ulteriori letture
+
+- [Loop Engineering — Addy Osmani](https://addyosmani.com/blog/loop-engineering/) — il recente tentativo di sostituire i suggerimenti di follow-up manuali con un sistema progettato, oltre a precauzioni pratiche sulla verifica e sulla responsabilità umana
+- [Building Effective Agents — Anthropic](https://www.anthropic.com/engineering/building-effective-agents) — flussi di lavoro di valutazione-ottimizzazione, feedback ambientale, condizioni di arresto e indicazioni su quando la complessità degli agenti è giustificata
+- [Una guida pratica agli agenti edilizi — OpenAI](https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/) — corse degli agenti, condizioni di uscita, strumenti, guardrail e intervento umano
+- [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629) — ricerca fondamentale sull'interlacciamento di azioni con osservazioni provenienti da un ambiente esterno
+
+## Riepilogo
+
+<Callout type="tip" title="Costruisci il feedback, non solo il suggerimento">
+Un ciclo affidabile ha un obiettivo misurabile, azioni limitate, osservazioni affidabili, un valutatore esplicito, uno stato compatto, uscite sicure e un giudizio umano laddove le conseguenze lo richiedono. Il modello è all'interno del loop; l'ingegnere rimane responsabile del circuito.
+</Callout>

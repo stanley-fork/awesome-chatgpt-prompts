@@ -1,0 +1,405 @@
+L'ingénierie du contexte décide **de ce que le modèle peut voir**. L'ingénierie de boucle décide **de ce que le système fera ensuite**.
+
+Au lieu qu'une personne lise une réponse à plusieurs reprises et rédige l'invite suivante, une boucle transforme ce travail de suivi en un système conçu. Il donne un objectif à une IA, la laisse agir, observe les retours réels, évalue le résultat et s'adapte ou s'arrête.
+
+<Callout type="info" title="La courte définition">
+L'ingénierie de boucle est la pratique consistant à concevoir le cycle de rétroaction autour d'un système d'IA : l'objectif, les actions, les observations, l'évaluation, l'état, les garde-fous et les règles d'arrêt qui font avancer le travail vers un résultat vérifiable.
+</Callout>
+
+## D'une bonne invite à une bonne boucle
+
+Une invite peut produire une bonne première tentative. Une boucle est utile lorsque le nombre d'étapes ne peut pas être connu à l'avance, que l'environnement peut changer ou que la première tentative doit être vérifiée par rapport à des preuves.
+
+<Compare
+  before={{
+    label: "Invite unique",
+    content: "Demander → Générer → Retourner\n\nLe modèle produit une réponse. Une personne décide si cela a fonctionné et écrit l'invite suivante."
+  }}
+  after={{
+    label: "Boucle technique",
+    content: "Cadrer → Agir → Observer → Évaluer → Adapter\n                 ↑______________________↓\n\nLe système rassemble des preuves, enregistre l'état et continue uniquement tant qu'un autre passage est utile."
+  }}
+/>
+
+Cette idée s’appuie sur des modèles d’agents antérieurs. Le [article ReAct] (https://arxiv.org/abs/2210.03629) a montré l'intérêt d'entrelacer des actions avec des observations d'un environnement externe. Le [modèle d'évaluateur-optimiseur] (https://www.anthropic.com/engineering/building-effective-agents) d'Anthropic ajoute une étape de rétroaction distincte, tandis que le [guide pratique des agents] d'OpenAI (https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/) décrit l'exécution des agents comme des boucles régies par des conditions de sortie. Le terme plus récent **ingénierie de boucle** concentre l'attention sur la conception délibérée de l'ensemble de ce cycle.
+
+## Les cinq mouvements
+
+<InfoGrid items={[
+  { label: "1. Cadre", description: "Transformez l'intention en un objectif, des contraintes, des critères de réussite et un budget.", color: "blue" },
+  { label: "2. Agir", description: "Choisissez une action limitée : rechercher, modifier, calculer, appeler un outil ou demander à une personne.", color: "amber" },
+  { label: "3. Observez", description: "Collectez ce qui s'est réellement passé : résultats des tests, résultats de l'API, citations ou commentaires des utilisateurs.", color: "cyan" },
+  { label: "4. Évaluer", description: "Comparez les preuves avec des critères explicites, et non avec la confiance du modèle.", color: "purple" },
+  { label: "5. Adaptez-vous", description: "Mettez à jour l’état, modifiez le plan, réessayez en toute sécurité, faites remonter ou arrêtez.", color: "green" },
+]} />
+
+La boucle, ce ne sont pas les flèches. L'ingénierie vit dans les **contrats entre les flèches** : ce qui compte comme une action, quelles observations sont fiables, qui les évalue, quel état survit et exactement quand l'exécution se termine.
+
+<LoopEngineeringLab content={{
+  eyebrow: "Contrôle de boucle / simulateur interactif",
+  title: "Parcourez une boucle de rétroaction fonctionnelle",
+  description: "Choisissez une tâche, puis avancez un signal à la fois. Remarquez comment les progrès proviennent de preuves environnementales et d'évaluations explicites, et non de la question de savoir si le modèle semble terminé.",
+  chooseScenarioLabel: "Choisissez une boucle",
+  goalLabel: "But",
+  stopRuleLabel: "Règle d'arrêt",
+  evidenceLabel: "Preuve fiable",
+  iterationLabel: "Itération",
+  progressLabel: "Progrès vérifiés",
+  openIssuesLabel: "Problèmes ouverts",
+  currentSignalLabel: "Signal actuel",
+  advanceLabel: "Avancer d'un pas",
+  nextIterationLabel: "Commencer la prochaine itération",
+  resetLabel: "Réinitialiser la boucle",
+  completeLabel: "Objectif vérifié",
+  completeDescription: "Les critères de réussite sont satisfaits, les preuves sont enregistrées et la boucle s'arrête au lieu de passer un autre cycle.",
+  stages: [
+    { id: "frame", label: "Cadre", verb: "Relisez le contrat" },
+    { id: "act", label: "Acte", verb: "Faites un mouvement limité" },
+    { id: "observe", label: "Observer", verb: "Lire les commentaires externes" },
+    { id: "evaluate", label: "Évaluer", verb: "Appliquer la rubrique" },
+    { id: "adapt", label: "Adapter", verb: "Mettre à jour le prochain mouvement" },
+  ],
+  scenarios: [
+    {
+      id: "code",
+      label: "Réparer un bug de paiement",
+      goal: "Corrigez les totaux de paiement sans modifier le comportement de remise valide.",
+      stopRule: "Les réussites de régression ciblée, les réussites de la suite de paiement complète et les peluches sont propres, ou s'arrêtent après trois tentatives et escaladent.",
+      evidence: "Étapes de reproduction, sortie du test, différence de code et suite de régression finale.",
+      cycles: [
+        {
+          action: "Reproduisez le total déclaré et ajoutez un test d'échec pour la taxe plus le pourcentage de réduction.",
+          observation: "Le test échoue d’un centime seulement lorsque la taxe est arrondie avant l’application de la réduction.",
+          evaluation: "Le bug est reproduit avec un signal déterministe, mais sa source n'est pas encore corrigée.",
+          adaptation: "Inspectez la limite d’arrondi et modifiez uniquement le chemin de calcul du total de la commande.",
+          progress: 34,
+          openIssues: 2,
+        },
+        {
+          action: "Déplacez l'arrondi jusqu'à la limite monétaire finale et effectuez des tests de paiement ciblés.",
+          observation: "La régression réussit, mais un test d’intégration de coupon échoue désormais sur une remise d’un montant fixe.",
+          evaluation: "Le premier symptôme est fixe, mais le changement est trop vaste. La règle d'arrêt n'est pas satisfaite.",
+          adaptation: "Affinez le patch et ajoutez un cas qui sépare l'arrondi des taxes de l'arrondi des coupons.",
+          progress: 71,
+          openIssues: 1,
+        },
+        {
+          action: "Appliquez le correctif de calcul étroit, puis exécutez la régression, la suite de paiement complète et le lint.",
+          observation: "Tous les contrôles sont réussis. Le diff touche une fonction de calcul et le nouveau test de régression.",
+          evaluation: "Chaque critère de réussite dispose de preuves indépendantes et aucune limite budgétaire n'a été dépassée.",
+          adaptation: "Arrêtez, conservez la sortie du test et confiez la petite différence à un réviseur humain.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+    {
+      id: "research",
+      label: "Vérifier une allégation de recherche",
+      goal: "Évaluez l’affirmation selon laquelle le travail à distance augmente toujours la productivité de l’équipe.",
+      stopRule: "Parvenez à une conclusion calibrée soutenue par au moins trois sources crédibles, avec les désaccords et les limites énoncés.",
+      evidence: "Liens sources directs, dates de publication, méthodes d'étude, tailles d'échantillon et mesures citées.",
+      cycles: [
+        {
+          action: "Recherchez des preuves récentes et remontez la statistique de productivité la plus répétée jusqu'à sa source.",
+          observation: "La plupart des articles répètent une enquête auprès des fournisseurs sans lier son questionnaire ou son échantillon brut.",
+          evaluation: "Les preuves sont répandues mais pas suffisamment solides pour étayer une affirmation absolue.",
+          adaptation: "Donner la priorité aux études évaluées par les pairs et aux ensembles de données publiques ; recherchez également des résultats contraires.",
+          progress: 28,
+          openIssues: 3,
+        },
+        {
+          action: "Comparez deux études évaluées par des pairs avec un ensemble de données nationales sur le travail.",
+          observation: "Les résultats varient selon le type de tâche, la méthode de mesure et selon que le travail est entièrement à distance ou hybride.",
+          evaluation: "Le mot « toujours » est contredit. Une conclusion conditionnelle devient défendable.",
+          adaptation: "Vérifiez si les études distinguent la production, les heures travaillées et la productivité perçue.",
+          progress: 68,
+          openIssues: 1,
+        },
+        {
+          action: "Créez un tableau de preuves et vérifiez chaque affirmation par rapport à la source originale.",
+          observation: "Les sources soutiennent des effets mixtes et identifient l'autonomie, la coordination et le type de tâche comme variables clés.",
+          evaluation: "La conclusion est étayée, l’incertitude est visible et le seuil source est atteint.",
+          adaptation: "Arrêtez-vous avec une réponse nuancée et conservez le tableau des preuves pour examen.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+    {
+      id: "writing",
+      label: "Polir un e-mail de lancement",
+      goal: "Créez un e-mail de lancement concis qui explique les avantages et génère des clics de démonstration qualifiés.",
+      stopRule: "Passez la rubrique vocale, restez sous 140 mots, contient un appel à l'action clair et survivez à un examen factuel.",
+      evidence: "Nombre de mots, scores des rubriques, validation des liens, informations sur les produits sources et notes des évaluateurs.",
+      cycles: [
+        {
+          action: "Rédigez à partir du brief produit et évaluez le résultat par rapport au public et à la rubrique vocale.",
+          observation: "Le brouillon compte 204 mots, s'ouvre sur des fonctionnalités et contient deux appels à l'action concurrents.",
+          evaluation: "Les faits sont exacts, mais les critères de hiérarchie et de longueur échouent.",
+          adaptation: "Dirigez avec le résultat client, supprimez l’action secondaire et réduisez les détails de mise en œuvre.",
+          progress: 41,
+          openIssues: 3,
+        },
+        {
+          action: "Réécrivez l’ouverture et comprimez le corps en une séquence à l’épreuve des problèmes et des avantages.",
+          observation: "L'e-mail compte 126 mots et contient un CTA, mais la phrase de preuve surestime un résultat bêta.",
+          evaluation: "La structure passe. L’étalonnage factuel ne répond toujours pas à la rubrique.",
+          adaptation: "Remplacez l'affirmation générale par le résultat bêta mesuré et demandez une vérification finale des faits.",
+          progress: 79,
+          openIssues: 1,
+        },
+        {
+          action: "Insérez la métrique vérifiée, validez le lien et exécutez à nouveau la rubrique complète.",
+          observation: "L'e-mail compte 132 mots, le lien est résolu, les faits correspondent au brief et chaque élément de la rubrique est accepté.",
+          evaluation: "L'artefact satisfait à la barre de qualité définie avec des preuves révisables.",
+          adaptation: "Arrêtez et envoyez la version approuvée au propriétaire de la campagne.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+  ],
+}} />
+
+## Rédigez d'abord le contrat de boucle
+
+Avant de choisir un modèle ou un framework, rédigez un petit contrat. Si ces champs sont vagues, la boucle transformera l’ambiguïté en coût répété.
+
+```yaml
+goal: "Quel état observable devrait devenir vrai ?"
+inputs: "Qu'est-ce qui démarre la boucle ?"
+state: "Quels faits et tentatives persistent entre les itérations ?"
+actions: "Quels outils le système peut-il utiliser et avec quelles autorisations ?"
+observations: "Quels signaux externes renvoient de ces actions ?"
+evaluator: "Quelles rubriques ou contrôles déterministes jugent le résultat ?"
+success: "Quelles preuves prouvent que l’objectif est atteint ?"
+failure: "Quelles conditions nécessitent une guérison ou une aide humaine ?"
+budget: "Nombre maximum de tours, de temps, de jetons, d'argent ou d'effets secondaires"
+```
+
+<Callout type="warning" title="Une boucle sans sortie est un mode d'échec">
+Définissez toujours trois sorties : **succès** lorsque les preuves satisfont l'objectif, **échec** lorsque la récupération n'est plus utile et **budget épuisé** lorsque la boucle atteint sa limite de coût ou de risque autorisée.
+</Callout>
+
+## Les observations doivent venir du monde
+
+Le modèle disant « cela semble correct » ne constitue pas une preuve solide. Une observation utile est produite par quelque chose en dehors de la réponse jugée.
+
+<table>
+  <thead>
+    <tr>
+      <th>Tâche</th>
+      <th>Faible observation</th>
+      <th>Observation forte</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Réparation de code</td>
+      <td>"Le correctif devrait fonctionner."</td>
+      <td>L'échec d'origine est reproduit, puis la régression et la suite complète réussissent.</td>
+    </tr>
+    <tr>
+      <td>Recherche</td>
+      <td>"Plusieurs sources sont d'accord."</td>
+      <td>Les réclamations renvoient aux sources originales avec les dates, les méthodes et les désaccords enregistrés.</td>
+    </tr>
+    <tr>
+      <td>Extraction de données</td>
+      <td>"Le JSON semble valide."</td>
+      <td>Les passes de validation du schéma et les enregistrements échantillonnés correspondent à la source.</td>
+    </tr>
+    <tr>
+      <td>Contenu</td>
+      <td>"La copie semble claire."</td>
+      <td>Il passe une rubrique nommée, un examen factuel, des vérifications de liens et des tests d'audience.</td>
+    </tr>
+    <tr>
+      <td>Opérations</td>
+      <td>"La demande a réussi."</td>
+      <td>Le système externe renvoie l'état attendu et un enregistrement d'audit existe.</td>
+    </tr>
+  </tbody>
+</table>
+
+C'est pourquoi les outils sont importants : les tests, les navigateurs, les bases de données, les validateurs et l'examen humain transforment une supposition interne en un résultat observable.
+
+## Séparez le créateur du vérificateur
+
+Pour les travaux à faible risque, un modèle peut rédiger et s’auto-évaluer. Pour les travaux importants, utilisez un vérificateur avec un travail différent et une autorité limitée.
+
+<InfoGrid columns={2} items={[
+  { label: "Fabricant", description: "Propose le changement, appelle des outils d’action et explique quelles preuves doivent être collectées.", color: "amber" },
+  { label: "Vérificateur", description: "Reçoit l'objectif, l'artefact et les preuves ; applique la rubrique ; ne peut pas réécrire silencieusement le travail qu’il note.", color: "green" },
+]} />
+
+Le vérificateur ne doit pas nécessairement être une autre IA. Préférez l’évaluateur le plus déterministe disponible :
+
+1. **Contrôles exacts** — types, schémas, contraintes, autorisations, hachages
+2. **Contrôles exécutables** — tests, linters, simulations, validation de lien
+3. **Vérifications de rubriques** — un modèle indépendant ou un humain utilisant des critères nommés
+4. **Contrôles des résultats** : comportement réel des utilisateurs ou mesures de production au fil du temps
+
+<Callout type="tip" title="La confiance n'est pas une preuve">
+Un score de confiance généré par le même modèle qui a créé l'artefact est toujours un résultat du modèle. Traitez-le comme un indice de routage, pas comme une preuve.
+</Callout>
+
+## L’État est l’épine dorsale de la boucle
+
+Le contexte est ce que le modèle voit **ce tour**. State est le disque compact qui permet de continuer le prochain tour sans répéter ni oublier le travail.
+
+<Checklist title="État de boucle utile" items={[
+  { text: "L'objectif actuel et les critères d'acceptation" },
+  { text: "Actions déjà tentées et leurs résultats observables" },
+  { text: "Artefacts produits, avec versions ou références stables" },
+  { text: "Verdicts des évaluateurs et problèmes non résolus" },
+  { text: "Budget consommé et autorisations toujours disponibles" },
+  { text: "La raison de la poursuite, de l'arrêt ou de l'escalade" },
+]} />
+
+Stockez des décisions et des preuves concises, et non la chaîne de pensée privée d'un modèle. Un bon état est petit, inspectable et peut reprendre en toute sécurité.
+
+## Formes de boucles courantes
+
+### La boucle de réparation
+
+`reproduire → changer une chose → exécuter des vérifications → diagnostiquer → répéter ou arrêter`
+
+Idéal pour le code, la configuration, le nettoyage des données et toute tâche avec des commentaires exécutables.
+
+### La boucle évaluateur-optimiseur
+
+`générer → noter avec une rubrique → renvoyer des commentaires ciblés → réviser`
+
+Idéal pour l'écriture, la traduction, la critique de conception et les résultats dont la qualité s'améliore grâce à des commentaires articulés.
+
+### La boucle de la recherche
+
+`rechercher → inspecter les sources → identifier les lacunes ou les conflits → rechercher à nouveau → synthétiser`
+
+Idéal lorsque l’exhaustivité n’est pas connue à l’avance. La règle d’arrêt doit mesurer la couverture des preuves, et non le nombre de résultats de recherche.
+
+### La boucle fermée par l'homme
+
+`préparer → vérifier automatiquement → faire une pause avant une action à haut risque → l'homme approuve ou redirige”
+
+Idéal pour les paiements, la publication, la suppression, les modifications d'accès, les décisions médicales ou juridiques et autres actions consécutives.
+
+## Modes de défaillance à concevoir
+
+<table>
+  <thead>
+    <tr>
+      <th>Échec</th>
+      <th>Que s'est-il passé</th>
+      <th>Réponse technique</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Réessai infini</td>
+      <td>La boucle n'a pas de succès mesurable ni de sortie de budget.</td>
+      <td>Ajoutez des états de terminal explicites et une limite d'itération stricte.</td>
+    </tr>
+    <tr>
+      <td>Auto-félicitation</td>
+      <td>Le créateur accepte sa propre réponse plausible sans preuve.</td>
+      <td>Utilisez des vérifications déterministes ou un vérificateur indépendant.</td>
+    </tr>
+    <tr>
+      <td>Boule de neige contextuelle</td>
+      <td>Chaque itération ajoute tout jusqu'à ce que le modèle perde le signal.</td>
+      <td>Conserver l'état structuré et reconstruire uniquement le contexte pertinent.</td>
+    </tr>
+    <tr>
+      <td>Baquette</td>
+      <td>La boucle alterne entre deux correctifs.</td>
+      <td>Détecter les états répétés et exiger une stratégie ou une escalade différente.</td>
+    </tr>
+    <tr>
+      <td>Dérive des objectifs</td>
+      <td>Les améliorations locales remplacent l'objectif initial.</td>
+      <td>Relisez l'objectif immuable et les critères d'acceptation à chaque cycle.</td>
+    </tr>
+    <tr>
+      <td>Répétition dangereuse</td>
+      <td>Une erreur réversible devient nuisible lorsqu'elle est répétée.</td>
+      <td>Limiter les autorisations, les effets secondaires, le taux, les dépenses et le rayon d'explosion.</td>
+    </tr>
+  </tbody>
+</table>
+
+## Une mise en œuvre minimale
+
+```typescript
+let state = initialize(goal, acceptanceCriteria, budget);
+
+while (state.budget.remaining > 0) {
+  const context = assembleRelevantContext(state);
+  const proposedAction = await maker.chooseAction(context);
+  const observation = await tools.executeWithinPolicy(proposedAction);
+  const verdict = await evaluator.check({ goal, observation, state });
+
+  state = recordIteration(state, { proposedAction, observation, verdict });
+
+  if (verdict.status === "passed") return complete(state);
+  if (verdict.status === "unsafe" || verdict.status === "blocked") {
+    return escalateToHuman(state);
+  }
+
+  state = adaptPlan(state, verdict.feedback);
+}
+
+return stopWithBudgetReport(state);
+```
+
+Le code est la partie la plus facile. Les questions difficiles sont des questions de domaine : quel test prouve que le bug a disparu ? Quelle source fait autorité ? Quelle action est réversible ? Qui peut approuver la dernière étape ? Ces décisions constituent le véritable travail de l’ingénierie des boucles.
+
+## Exercice : Concevoir une boucle
+
+<TryIt
+  title="Rédiger un contrat de boucle"
+  description="Remplacez les variables par une tâche récurrente issue de votre propre travail. Demandez à l’IA de contester les preuves faibles et les règles d’arrêt ambiguës."
+  prompt={`Concevez une boucle de travail d'IA limitée pour cette tâche :
+
+TÂCHE : \${task:trier les nouveaux problèmes du support client chaque matin}
+
+Définir :
+1. L’objectif observable
+2. Le déclencheur et les entrées requises
+3. Actions autorisées et autorisations des outils
+4. Observations fiables de l'environnement externe
+5. L'évaluateur et sa rubrique
+6. État qui persiste entre les itérations
+7. Succès, échecs et sorties avec un budget épuisé
+8. Portes d’approbation humaine pour les actions risquées
+9. Un format de trace qui rend chaque itération auditable
+
+Identifiez ensuite les trois modes de défaillance les plus probables dans votre conception et révisez la boucle pour les éviter.`}
+/>
+
+<Quiz
+  question="Un agent modifie le code, relit la différence et dit que le bug est corrigé. Quelle est la partie manquante la plus importante de la boucle ?"
+  options={[
+    "Une invite système plus longue",
+    "Une observation externe évaluée par rapport à une règle d'arrêt",
+    "Une deuxième passe de montage",
+    "Une fenêtre contextuelle plus grande"
+  ]}
+  correctIndex={1}
+  explanation="L’agent a produit et inspecté un artefact, mais il n’a pas rassemblé de preuves indépendantes. Reproduire l’échec et exécuter les tests pertinents créerait un signal observable qu’une règle d’arrêt pourrait évaluer."
+/>
+
+## Lectures complémentaires
+
+- [Loop Engineering — Addy Osmani] (https://addyosmani.com/blog/loop-engineering/) — le récent cadrage du remplacement des invites de suivi manuel par un système conçu, ainsi que des précautions pratiques concernant la vérification et la responsabilité humaine
+- [Créer des agents efficaces - Anthropique] (https://www.anthropic.com/engineering/building-effective-agents) - flux de travail de l'évaluateur-optimiseur, retour d'information sur l'environnement, conditions d'arrêt et conseils sur les cas où la complexité agentique est justifiée
+- [Un guide pratique pour créer des agents - OpenAI] (https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/) - exécutions d'agents, conditions de sortie, outils, garde-corps et intervention humaine
+- [ReAct : Synergizing Reasoning and Acting in Language Models] (https://arxiv.org/abs/2210.03629) — recherche fondamentale sur l'entrelacement des actions avec les observations d'un environnement externe
+
+## Résumé
+
+<Callout type="tip" title="Créez des commentaires, pas seulement une invite">
+Une boucle fiable a un objectif mesurable, des actions limitées, des observations fiables, un évaluateur explicite, un état compact, des sorties sûres et un jugement humain lorsque les conséquences l'exigent. Le modèle est à l’intérieur de la boucle ; l'ingénieur reste responsable de la boucle.
+</Callout>

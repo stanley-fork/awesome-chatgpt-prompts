@@ -1,0 +1,405 @@
+Kontext-Engineering entscheidet, **was das Modell sehen kann**. Das Loop-Engineering entscheidet, **was das System als nächstes tut**.
+
+Anstatt dass eine Person wiederholt eine Antwort liest und die nächste Eingabeaufforderung schreibt, verwandelt eine Schleife diese Folgearbeit in ein entworfenes System. Es gibt einer KI ein Ziel vor, lässt sie handeln, beobachtet echtes Feedback, wertet das Ergebnis aus und passt sich entweder an oder stoppt.
+
+<Callout type="info" title="Die kurze Definition">
+Beim Loop-Engineering handelt es sich um die Praxis, den Feedback-Zyklus rund um ein KI-System zu entwerfen: Ziel, Aktionen, Beobachtungen, Bewertung, Zustand, Leitplanken und Stoppregeln, die die Arbeit in Richtung eines überprüfbaren Ergebnisses bewegen.
+</Callout>
+
+## Von einer guten Eingabeaufforderung zu einer guten Schleife
+
+Eine Aufforderung kann zu einem starken ersten Versuch führen. Eine Schleife ist nützlich, wenn die Anzahl der Schritte nicht im Voraus bekannt sein kann, sich die Umgebung ändern kann oder der erste Versuch anhand von Beweisen überprüft werden muss.
+
+<Compare
+  before={{
+    label: "One-Shot-Eingabeaufforderung",
+    content: "Fragen → Generieren → Zurückgeben\n\nDas Modell liefert eine Antwort. Eine Person entscheidet, ob es funktioniert hat und schreibt die nächste Eingabeaufforderung."
+  }}
+  after={{
+    label: "Konstruierte Schleife",
+    content: "Rahmen → Handeln → Beobachten → Bewerten → Anpassen\n                 ↑______________________↓\n\nDas System sammelt Beweise, zeichnet den Status auf und fährt nur fort, solange ein weiterer Durchgang sinnvoll ist."
+  }}
+/>
+
+Diese Idee baut auf früheren Agentenmustern auf. Das [ReAct-Papier](https://arxiv.org/abs/2210.03629) zeigte den Wert der Verknüpfung von Aktionen mit Beobachtungen aus einer externen Umgebung. Das [Evaluator-Optimierer-Muster] (https://www.anthropic.com/engineering/building-effective-agents) von Anthropic fügt einen eindeutigen Feedback-Schritt hinzu, während der [praktische Leitfaden für Agenten] (https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/) von OpenAI Agentenläufe als Schleifen beschreibt, die durch Exit-Bedingungen gesteuert werden. Der neuere Begriff „Loop Engineering“ konzentriert sich auf die bewusste Gestaltung des gesamten Zyklus.
+
+## Die fünf Bewegungen
+
+<InfoGrid items={[
+  { label: "1. Rahmen", description: "Verwandeln Sie Ihre Absicht in ein Ziel, Einschränkungen, Erfolgskriterien und ein Budget.", color: "blue" },
+  { label: "2. Handeln", description: "Wählen Sie eine begrenzte Aktion: Suchen, Bearbeiten, Berechnen, Aufrufen eines Tools oder Fragen einer Person.", color: "amber" },
+  { label: "3. Beobachten", description: "Sammeln Sie, was tatsächlich passiert ist: Testausgaben, API-Ergebnisse, Zitate oder Benutzerfeedback.", color: "cyan" },
+  { label: "4. Bewerten", description: "Vergleichen Sie die Beweise mit expliziten Kriterien – nicht mit der Zuverlässigkeit des Modells.", color: "purple" },
+  { label: "5. Anpassen", description: "Status aktualisieren, Plan ändern, sicher erneut versuchen, eskalieren oder stoppen.", color: "green" },
+]} />
+
+Die Schleife ist nicht die Pfeile. Die Technik lebt in den **Verträgen zwischen den Pfeilen**: Was gilt als Aktion, welche Beobachtungen sind vertrauenswürdig, wer bewertet sie, welcher Zustand bleibt bestehen und wann genau die Ausführung endet.
+
+<LoopEngineeringLab content={{
+  eyebrow: "Schleifensteuerung / interaktiver Simulator",
+  title: "Durchlaufen Sie eine funktionierende Feedbackschleife",
+  description: "Wählen Sie eine Aufgabe und schalten Sie dann ein Signal nach dem anderen weiter. Beachten Sie, dass Fortschritt durch Umweltbeweise und explizite Bewertung entsteht – und nicht dadurch, dass das Modell gefragt wird, ob es sich fertig anfühlt.",
+  chooseScenarioLabel: "Wählen Sie eine Schleife",
+  goalLabel: "Ziel",
+  stopRuleLabel: "Stop-Regel",
+  evidenceLabel: "Vertrauenswürdige Beweise",
+  iterationLabel: "Iteration",
+  progressLabel: "Verifizierter Fortschritt",
+  openIssuesLabel: "Offene Probleme",
+  currentSignalLabel: "Aktuelles Signal",
+  advanceLabel: "Gehen Sie einen Schritt weiter",
+  nextIterationLabel: "Beginnen Sie mit der nächsten Iteration",
+  resetLabel: "Schleife zurücksetzen",
+  completeLabel: "Ziel bestätigt",
+  completeDescription: "Die Erfolgskriterien sind erfüllt, Beweise werden aufgezeichnet und die Schleife stoppt, anstatt einen weiteren Zyklus zu durchlaufen.",
+  stages: [
+    { id: "frame", label: "Rahmen", verb: "Lesen Sie den Vertrag noch einmal durch" },
+    { id: "act", label: "Akt", verb: "Machen Sie eine begrenzte Bewegung" },
+    { id: "observe", label: "Beobachten", verb: "Lesen Sie externes Feedback" },
+    { id: "evaluate", label: "Auswerten", verb: "Wenden Sie die Rubrik an" },
+    { id: "adapt", label: "Anpassen", verb: "Aktualisieren Sie den nächsten Schritt" },
+  ],
+  scenarios: [
+    {
+      id: "code",
+      label: "Beheben Sie einen Checkout-Fehler",
+      goal: "Korrigieren Sie die Checkout-Summen, ohne das gültige Rabattverhalten zu ändern.",
+      stopRule: "Gezielte Regressionsprüfungen, vollständige Kassenprüfungen und Flusen sind sauber – oder nach drei Versuchen aufhören und eskalieren.",
+      evidence: "Reproduktionsschritte, Testausgabe, der Codeunterschied und die endgültige Regressionssuite.",
+      cycles: [
+        {
+          action: "Reproduzieren Sie die gemeldete Gesamtsumme und fügen Sie einen fehlgeschlagenen Test für Steuer plus prozentualen Rabatt hinzu.",
+          observation: "Der Test schlägt nur um einen Cent fehl, wenn die Steuer gerundet wird, bevor der Rabatt angewendet wird.",
+          evaluation: "Der Fehler wird mit einem deterministischen Signal reproduziert, seine Ursache ist jedoch noch nicht behoben.",
+          adaptation: "Überprüfen Sie die Rundungsgrenze und ändern Sie nur den Pfad zur Berechnung der Bestellsumme.",
+          progress: 34,
+          openIssues: 2,
+        },
+        {
+          action: "Verschieben Sie die Rundung auf die endgültige Währungsgrenze und führen Sie gezielte Checkout-Tests durch.",
+          observation: "Die Regression ist erfolgreich, aber ein Coupon-Integrationstest schlägt jetzt bei einem Rabatt mit festem Betrag fehl.",
+          evaluation: "Das erste Symptom ist behoben, aber die Veränderung ist zu umfassend. Die Stoppregel ist nicht erfüllt.",
+          adaptation: "Grenzen Sie den Patch ein und fügen Sie einen Fall hinzu, der die Steuerrundung von der Kuponrundung trennt.",
+          progress: 71,
+          openIssues: 1,
+        },
+        {
+          action: "Wenden Sie die Korrektur der engen Berechnung an und führen Sie dann die Regression, die vollständige Checkout-Suite und Lint aus.",
+          observation: "Alle Schecks bestehen. Der Unterschied betrifft eine Berechnungsfunktion und den neuen Regressionstest.",
+          evaluation: "Für jedes Erfolgskriterium gibt es unabhängige Belege und es wurde keine Budgetgrenze überschritten.",
+          adaptation: "Stoppen Sie, bewahren Sie die Testausgabe auf und übergeben Sie den kleinen Unterschied einem menschlichen Prüfer.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+    {
+      id: "research",
+      label: "Überprüfen Sie einen Forschungsanspruch",
+      goal: "Bewerten Sie die Behauptung, dass Remote-Arbeit immer die Teamproduktivität steigert.",
+      stopRule: "Erreichen Sie eine fundierte Schlussfolgerung, die auf mindestens drei glaubwürdigen Quellen basiert und auf Unstimmigkeiten und Einschränkungen hinweist.",
+      evidence: "Direkte Quellenlinks, Veröffentlichungsdaten, Studienmethoden, Stichprobengrößen und zitierte Metriken.",
+      cycles: [
+        {
+          action: "Suchen Sie nach aktuellen Beweisen und verfolgen Sie die am häufigsten wiederholte Produktivitätsstatistik bis zu ihrer Quelle.",
+          observation: "Die meisten Artikel wiederholen eine Lieferantenbefragung, ohne den Fragebogen oder die Rohstichprobe zu verknüpfen.",
+          evaluation: "Die Beweise sind populär, aber nicht stark genug, um eine absolute Behauptung zu stützen.",
+          adaptation: "Priorisieren Sie peer-reviewte Studien und öffentliche Datensätze; Suchen Sie auch nach gegenteiligen Erkenntnissen.",
+          progress: 28,
+          openIssues: 3,
+        },
+        {
+          action: "Vergleichen Sie zwei von Experten begutachtete Studien mit einem nationalen Arbeitsdatensatz.",
+          observation: "Die Ergebnisse variieren je nach Aufgabentyp, Messmethode und ob die Arbeit vollständig remote oder hybrid erfolgt.",
+          evaluation: "Dem Wort „immer“ wird widersprochen. Eine bedingte Schlussfolgerung wird vertretbar.",
+          adaptation: "Prüfen Sie, ob in den Studien Leistung, geleistete Arbeitsstunden und wahrgenommene Produktivität unterschieden werden.",
+          progress: 68,
+          openIssues: 1,
+        },
+        {
+          action: "Erstellen Sie eine Beweistabelle und überprüfen Sie jede Behauptung anhand der Originalquelle.",
+          observation: "Die Quellen unterstützen gemischte Effekte und identifizieren Autonomie, Koordination und Aufgabentyp als Schlüsselvariablen.",
+          evaluation: "Die Schlussfolgerung wird unterstützt, die Unsicherheit ist sichtbar und der Quellenschwellenwert ist erreicht.",
+          adaptation: "Hören Sie mit einer qualifizierten Antwort auf und bewahren Sie die Beweistabelle zur Überprüfung auf.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+    {
+      id: "writing",
+      label: "Polieren Sie eine Start-E-Mail",
+      goal: "Erstellen Sie eine prägnante Einführungs-E-Mail, die die Vorteile erläutert und qualifizierte Demo-Klicks generiert.",
+      stopRule: "Bestehen Sie die Sprachrubrik, bleiben Sie unter 140 Wörtern, enthalten Sie einen klaren Aufruf zum Handeln und überstehen Sie eine sachliche Rezension.",
+      evidence: "Wortanzahl, Rubrikbewertungen, Linkvalidierung, Fakten zum Quellprodukt und Anmerkungen des Rezensenten.",
+      cycles: [
+        {
+          action: "Erstellen Sie einen Entwurf aus dem Produktbriefing und bewerten Sie das Ergebnis anhand der Zielgruppen- und Sprachbewertung.",
+          observation: "Der Entwurf umfasst 204 Wörter, beginnt mit Features und enthält zwei konkurrierende Handlungsaufforderungen.",
+          evaluation: "Die Fakten sind korrekt, aber die Hierarchie- und Längenkriterien versagen.",
+          adaptation: "Gehen Sie vom Kundenergebnis aus, entfernen Sie sekundäre Maßnahmen und reduzieren Sie die Implementierungsdetails.",
+          progress: 41,
+          openIssues: 3,
+        },
+        {
+          action: "Schreiben Sie die Eröffnung neu und komprimieren Sie den Körper zu einer problem-nutzensicheren Sequenz.",
+          observation: "Die E-Mail besteht aus 126 Wörtern und hat einen CTA, aber im Beweissatz wird ein Beta-Ergebnis überbewertet.",
+          evaluation: "Struktur geht durch. Die sachliche Kalibrierung erfüllt die Kriterien immer noch nicht.",
+          adaptation: "Ersetzen Sie die allgemeine Behauptung durch das gemessene Beta-Ergebnis und fordern Sie eine abschließende Faktenprüfung an.",
+          progress: 79,
+          openIssues: 1,
+        },
+        {
+          action: "Geben Sie die verifizierte Metrik ein, validieren Sie den Link und führen Sie die gesamte Rubrik noch einmal aus.",
+          observation: "Die E-Mail besteht aus 132 Wörtern, der Link wird aufgelöst, die Fakten stimmen mit dem Briefing überein und jedes Rubrikelement wird bestanden.",
+          evaluation: "Das Artefakt erfüllt die definierten Qualitätskriterien mit überprüfbaren Beweisen.",
+          adaptation: "Stoppen Sie und senden Sie die genehmigte Version an den Kampagneninhaber.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+  ],
+}} />
+
+## Schreiben Sie zuerst den Schleifenvertrag
+
+Schreiben Sie einen kleinen Vertrag, bevor Sie ein Modell oder Framework auswählen. Wenn diese Felder vage sind, wird die Schleife die Mehrdeutigkeit in wiederholte Kosten umwandeln.
+
+```yaml
+goal: "Welcher beobachtbare Zustand sollte wahr werden?"
+inputs: "Was startet die Schleife?"
+state: "Welche Fakten und Versuche bleiben zwischen den Iterationen bestehen?"
+actions: "Welche Tools darf das System nutzen und mit welchen Berechtigungen?"
+observations: "Welche externen Signale gehen von diesen Aktionen aus?"
+evaluator: "Welche Rubrik oder deterministische Prüfungen beurteilen das Ergebnis?"
+success: "Welche Beweise beweisen, dass das Ziel erreicht ist?"
+failure: "Welche Erkrankungen erfordern Genesung oder menschliche Hilfe?"
+budget: "Maximale Anzahl an Runden, Zeit, Token, Geld oder Nebenwirkungen"
+```
+
+<Callout type="warning" title="Eine Schleife ohne Ausgang ist ein Fehlermodus">
+Definieren Sie immer drei Ausgänge: **Erfolg**, wenn die Beweise das Ziel erfüllen, **Misserfolg**, wenn die Wiederherstellung nicht mehr nützlich ist, und **Budget erschöpft**, wenn die Schleife ihre zulässigen Kosten- oder Risikogrenzen erreicht.
+</Callout>
+
+## Beobachtungen müssen aus der Welt kommen
+
+Die Aussage des Modells „Das sieht richtig aus“ ist kein überzeugender Beweis. Eine nützliche Beobachtung entsteht durch etwas außerhalb der zu beurteilenden Antwort.
+
+<table>
+  <thead>
+    <tr>
+      <th>Aufgabe</th>
+      <th>Schwache Beobachtung</th>
+      <th>Starke Beobachtung</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Code-Reparatur</td>
+      <td>„Das Update sollte funktionieren.“</td>
+      <td>Der ursprüngliche Fehler wird reproduziert, dann werden die Regression und die vollständige Suite erfolgreich durchgeführt.</td>
+    </tr>
+    <tr>
+      <td>Forschung</td>
+      <td>„Mehrere Quellen stimmen zu.“</td>
+      <td>Ansprüche verweisen auf Originalquellen mit aufgezeichneten Daten, Methoden und Meinungsverschiedenheiten.</td>
+    </tr>
+    <tr>
+      <td>Datenextraktion</td>
+      <td>„Der JSON scheint gültig zu sein.“</td>
+      <td>Die Schemavalidierung ist erfolgreich und die Stichprobendatensätze stimmen mit der Quelle überein.</td>
+    </tr>
+    <tr>
+      <td>Inhalt</td>
+      <td>„Die Kopie fühlt sich klar an.“</td>
+      <td>Es besteht eine benannte Rubrik, eine sachliche Überprüfung, Linkprüfungen und Zielgruppentests.</td>
+    </tr>
+    <tr>
+      <td>Operationen</td>
+      <td>„Die Anfrage war erfolgreich.“</td>
+      <td>Das externe System gibt den erwarteten Status zurück und es ist ein Prüfdatensatz vorhanden.</td>
+    </tr>
+  </tbody>
+</table>
+
+Aus diesem Grund sind Tools wichtig: Tests, Browser, Datenbanken, Validatoren und menschliche Überprüfung verwandeln eine interne Vermutung in ein beobachtbares Ergebnis.
+
+## Trennen Sie den Maker vom Checker
+
+Bei Arbeiten mit geringem Risiko kann ein Modell Entwürfe entwerfen und selbst überprüfen. Beauftragen Sie für wichtige Arbeiten einen Prüfer mit einer anderen Aufgabe und eingeschränkten Befugnissen.
+
+<InfoGrid columns={2} items={[
+  { label: "Hersteller", description: "Schlägt die Änderung vor, ruft Aktionsinstrumente auf und erklärt, welche Beweise gesammelt werden sollten.", color: "amber" },
+  { label: "Checker", description: "Erhält das Ziel, das Artefakt und die Beweise; wendet die Rubrik an; kann die von ihm bewertete Arbeit nicht stillschweigend umschreiben.", color: "green" },
+]} />
+
+Der Prüfer muss keine andere KI sein. Bevorzugen Sie den deterministischsten verfügbaren Evaluator:
+
+1. **Exakte Prüfungen** – Typen, Schemata, Einschränkungen, Berechtigungen, Hashes
+2. **Ausführbare Prüfungen** – Tests, Linters, Simulationen, Linkvalidierung
+3. **Rubrikprüfungen** – ein unabhängiges Modell oder ein unabhängiger Mensch anhand benannter Kriterien
+4. **Ergebnisprüfungen** – echtes Benutzerverhalten oder Produktionsmetriken im Zeitverlauf
+
+<Callout type="tip" title="Vertrauen ist kein Beweis">
+Ein Konfidenzwert, der von demselben Modell generiert wurde, das das Artefakt erstellt hat, ist immer noch eine Modellausgabe. Betrachten Sie es als Routing-Hinweis, nicht als Beweis.
+</Callout>
+
+## Der Staat ist das Rückgrat der Schleife
+
+Der Kontext ist das, was das Modell **in dieser Runde** sieht. State ist der kompakte Datensatz, der es ermöglicht, die nächste Runde fortzusetzen, ohne die Arbeit zu wiederholen oder zu vergessen.
+
+<Checklist title="Nützlicher Schleifenstatus" items={[
+  { text: "Das aktuelle Ziel und die Akzeptanzkriterien" },
+  { text: "Bereits unternommene Aktionen und deren beobachtbare Ergebnisse" },
+  { text: "Produzierte Artefakte mit Versionen oder stabilen Referenzen" },
+  { text: "Gutachterurteile und ungelöste Probleme" },
+  { text: "Budget verbraucht und Berechtigungen noch verfügbar" },
+  { text: "Der Grund für das Fortfahren, Stoppen oder Eskalieren" },
+]} />
+
+Speichern Sie prägnante Entscheidungen und Beweise – nicht die private Gedankenkette eines Modells. Ein guter Zustand ist klein, inspizierbar und kann sicher wieder aufgenommen werden.
+
+## Gängige Schleifenformen
+
+### Die Reparaturschleife
+
+„reproduzieren → eine Sache ändern → Prüfungen durchführen → diagnostizieren → wiederholen oder stoppen“.
+
+Ideal für Code, Konfiguration, Datenbereinigung und alle Aufgaben mit ausführbarem Feedback.
+
+### Die Evaluator-Optimizer-Schleife
+
+„generieren → mit einer Rubrik punkten → gezieltes Feedback zurückgeben → überarbeiten“.
+
+Am besten geeignet für Schreiben, Übersetzen, Designkritik und Ergebnisse, deren Qualität durch artikuliertes Feedback verbessert wird.
+
+### Die Forschungsschleife
+
+„Suchen → Quellen prüfen → Lücken oder Konflikte identifizieren → erneut suchen → synthetisieren“.
+
+Am besten, wenn die Vollständigkeit nicht im Voraus bekannt ist. Die Stoppregel sollte die Evidenzabdeckung messen, nicht die Anzahl der Suchergebnisse.
+
+### Der vom Menschen gesteuerte Kreislauf
+
+„Vorbereiten → automatisch überprüfen → vor risikoreichen Maßnahmen pausieren → menschliche Genehmigung oder Weiterleitung“.
+
+Am besten geeignet für Zahlungen, Veröffentlichungen, Löschungen, Zugriffsänderungen, medizinische oder rechtliche Entscheidungen und andere Folgemaßnahmen.
+
+## Fehlermodi zum Entwerfen
+
+<table>
+  <thead>
+    <tr>
+      <th>Fehler</th>
+      <th>Was ist passiert?</th>
+      <th>Technische Antwort</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Unendliche Wiederholung</td>
+      <td>Die Schleife hat keinen messbaren Erfolg oder Budgetausgang.</td>
+      <td>Fügen Sie explizite Endzustände und eine feste Iterationsobergrenze hinzu.</td>
+    </tr>
+    <tr>
+      <td>Selbstbeweihräucherung</td>
+      <td>Der Hersteller akzeptiert seine eigene plausible Antwort ohne Beweise.</td>
+      <td>Verwenden Sie deterministische Prüfungen oder einen unabhängigen Prüfer.</td>
+    </tr>
+    <tr>
+      <td>Kontext-Schneeball</td>
+      <td>Bei jeder Iteration wird alles angehängt, bis das Modell das Signal verliert.</td>
+      <td>Behalten Sie den strukturierten Zustand bei und erstellen Sie nur relevanten Kontext neu.</td>
+    </tr>
+    <tr>
+      <td>Prügel</td>
+      <td>Die Schleife wechselt zwischen zwei Korrekturen.</td>
+      <td>Erkennen Sie wiederholte Zustände und erfordern Sie eine andere Strategie oder Eskalation.</td>
+    </tr>
+    <tr>
+      <td>Zieldrift</td>
+      <td>Lokale Verbesserungen ersetzen das ursprüngliche Ziel.</td>
+      <td>Lesen Sie die unveränderlichen Ziel- und Akzeptanzkriterien in jedem Zyklus erneut.</td>
+    </tr>
+    <tr>
+      <td>Unsichere Wiederholung</td>
+      <td>Ein umkehrbarer Fehler wird schädlich, wenn er wiederholt wird.</td>
+      <td>Beschränken Sie Berechtigungen, Nebenwirkungen, Rate, Ausgaben und Explosionsradius.</td>
+    </tr>
+  </tbody>
+</table>
+
+## Eine minimale Implementierung
+
+```typescript
+let state = initialize(goal, acceptanceCriteria, budget);
+
+while (state.budget.remaining > 0) {
+  const context = assembleRelevantContext(state);
+  const proposedAction = await maker.chooseAction(context);
+  const observation = await tools.executeWithinPolicy(proposedAction);
+  const verdict = await evaluator.check({ goal, observation, state });
+
+  state = recordIteration(state, { proposedAction, observation, verdict });
+
+  if (verdict.status === "passed") return complete(state);
+  if (verdict.status === "unsafe" || verdict.status === "blocked") {
+    return escalateToHuman(state);
+  }
+
+  state = adaptPlan(state, verdict.feedback);
+}
+
+return stopWithBudgetReport(state);
+```
+
+Der Code ist der einfache Teil. Die schwierigen Fragen sind Domänenfragen: Welcher Test beweist, dass der Fehler behoben ist? Welche Quelle ist maßgeblich? Welche Aktion ist reversibel? Wer kann den letzten Schritt genehmigen? Diese Entscheidungen sind die eigentliche Arbeit des Loop-Engineerings.
+
+## Übung: Entwerfen Sie eine Schleife
+
+<TryIt
+  title="Entwerfen Sie einen Loop-Vertrag"
+  description="Ersetzen Sie die Variablen durch eine wiederkehrende Aufgabe aus Ihrer eigenen Arbeit. Bitten Sie die KI, schwache Beweise und mehrdeutige Stoppregeln in Frage zu stellen."
+  prompt={`Entwerfen Sie eine begrenzte KI-Arbeitsschleife für diese Aufgabe:
+
+AUFGABE: \${task:jeden Morgen neue Kundensupport-Anfragen priorisieren}
+
+Definieren:
+1. Das beobachtbare Ziel
+2. Der Auslöser und die erforderlichen Eingaben
+3. Erlaubte Aktionen und Werkzeugberechtigungen
+4. Vertrauenswürdige Beobachtungen aus der externen Umgebung
+5. Der Bewerter und seine Rubrik
+6. Zustand, der zwischen Iterationen bestehen bleibt
+7. Erfolg, Misserfolg und Ausstiege bei erschöpftem Budget
+8. Menschliche Zustimmungstore für riskante Handlungen
+9. Ein Trace-Format, das jede Iteration überprüfbar macht
+
+Identifizieren Sie dann die drei wahrscheinlichsten Fehlermodi in Ihrem Design und überarbeiten Sie die Schleife, um sie zu verhindern.`}
+/>
+
+<Quiz
+  question="Ein Agent bearbeitet den Code, liest das Diff erneut und sagt, der Fehler sei behoben. Was ist der wichtigste fehlende Teil der Schleife?"
+  options={[
+    "Eine längere Systemaufforderung",
+    "Eine externe Beobachtung, die anhand einer Stoppregel bewertet wurde",
+    "Ein zweiter Bearbeitungsdurchgang",
+    "Ein größeres Kontextfenster"
+  ]}
+  correctIndex={1}
+  explanation="Der Agent hat ein Artefakt hergestellt und inspiziert, aber keine unabhängigen Beweise gesammelt. Durch die Reproduktion des Fehlers und die Durchführung relevanter Tests würde ein beobachtbares Signal erzeugt, das von einer Stoppregel ausgewertet werden kann."
+/>
+
+## Weiterführende Literatur
+
+- [Loop Engineering – Addy Osmani](https://addyosmani.com/blog/loop-engineering/) – der aktuelle Entwurf, manuelle Folgeaufforderungen durch ein entworfenes System zu ersetzen, plus praktische Vorsichtsmaßnahmen zu Überprüfung und menschlicher Verantwortung
+- [Aufbau effektiver Agenten – Anthropic](https://www.anthropic.com/engineering/building-effective-agents) – Evaluator-Optimierer-Workflows, Umgebungsfeedback, Stoppbedingungen und Anleitung, wann die Agentenkomplexität gerechtfertigt ist
+- [Ein praktischer Leitfaden zum Erstellen von Agenten – OpenAI](https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/) – Agentenausführungen, Beendigungsbedingungen, Tools, Leitplanken und menschliches Eingreifen
+- [ReAct: Synergizing Reasoning and Acting in Language Models] (https://arxiv.org/abs/2210.03629) – Grundlagenforschung zur Verknüpfung von Aktionen mit Beobachtungen aus einer externen Umgebung
+
+## Zusammenfassung
+
+<Callout type="tip" title="Bauen Sie das Feedback auf, nicht nur die Aufforderung">
+Eine zuverlässige Schleife hat ein messbares Ziel, begrenzte Aktionen, vertrauenswürdige Beobachtungen, einen expliziten Bewerter, einen kompakten Zustand, sichere Ausgänge und menschliches Urteilsvermögen, wo Konsequenzen dies erfordern. Das Modell befindet sich innerhalb der Schleife; Der Ingenieur bleibt für die Schleife verantwortlich.
+</Callout>

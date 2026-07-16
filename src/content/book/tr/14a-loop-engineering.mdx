@@ -1,0 +1,405 @@
+Bağlam mühendisliği **modelin neyi görebileceğine** karar verir. Döngü mühendisliği **sistemin bundan sonra ne yapacağına** karar verir.
+
+Bir kişinin sürekli olarak bir yanıtı okuması ve bir sonraki uyarıyı yazması yerine, bir döngü bu takip çalışmasını tasarlanmış bir sisteme dönüştürür. Yapay zekaya bir hedef verir, harekete geçmesini sağlar, gerçek geri bildirimleri gözlemler, sonucu değerlendirir ve ya uyum sağlar ya da durur.
+
+<Callout type="info" title="Kısa Tanım">
+Döngü mühendisliği, bir yapay zeka sistemi etrafında geri bildirim döngüsünü tasarlama uygulamasıdır: çalışmayı doğrulanabilir bir sonuca doğru hareket ettiren hedef, eylemler, gözlemler, değerlendirme, durum, korkuluklar ve durdurma kuralları.
+</Callout>
+
+## İyi Bir İstemden İyi Bir Döngüye
+
+Bir istem güçlü bir ilk denemeye neden olabilir. Adım sayısının önceden bilinemediği, ortamın değişebileceği veya ilk denemenin kanıtlarla kontrol edilmesi gerektiği durumlarda döngü faydalıdır.
+
+<Compare
+  before={{
+    label: "Tek Seferlik İstem",
+    content: "Sor → Oluştur → Geri Dön\n\nModel bir cevap üretir. Bir kişi bunun işe yarayıp yaramadığına karar verir ve bir sonraki istemi yazar."
+  }}
+  after={{
+    label: "Tasarlanmış Döngü",
+    content: "Çerçeve → Harekete Geç → Gözlemle → Değerlendir → Uyarla\n                 ↑_________________________↓\n\nSistem kanıtları toplar, durumu kaydeder ve yalnızca başka bir geçiş yararlı olduğu sürece devam eder."
+  }}
+/>
+
+Bu fikir daha önceki ajan kalıplarına dayanıyor. [ReAct makalesi](https://arxiv.org/abs/2210.03629), dış ortamdan yapılan gözlemlerle eylemlerin serpiştirilmesinin değerini gösterdi. Anthropic'in [değerlendirici-optimizasyon modeli](https://www.anthropic.com/engineering/building-effective-agents) farklı bir geri bildirim adımı eklerken OpenAI'nin [aracılar için pratik rehber](https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/) aracı çalıştırmalarını çıkış koşulları tarafından yönetilen döngüler olarak tanımlar. Daha yeni olan **döngü mühendisliği** terimi, tüm döngünün kasıtlı olarak tasarlanmasına dikkat çekiyor.
+
+## Beş Hareket
+
+<InfoGrid items={[
+  { label: "1. Çerçeve", description: "Niyeti bir hedefe, kısıtlamalara, başarı kriterine ve bütçeye dönüştürün.", color: "blue" },
+  { label: "2. Eylem", description: "Sınırlı bir eylem seçin: arayın, düzenleyin, hesaplayın, bir aracı çağırın veya bir kişiye sorun.", color: "amber" },
+  { label: "3. Gözlemleyin", description: "Gerçekte ne olduğunu toplayın: test çıktısı, API sonuçları, alıntılar veya kullanıcı geri bildirimleri.", color: "cyan" },
+  { label: "4. Değerlendirin", description: "Kanıtları modelin güvenirliğiyle değil, açık ölçütlerle karşılaştırın.", color: "purple" },
+  { label: "5. Uyum sağlayın", description: "Durumu güncelleyin, planı değiştirin, güvenli bir şekilde yeniden deneyin, üst kademeye iletin veya durdurun.", color: "green" },
+]} />
+
+Döngü oklar değildir. Mühendislik **oklar arasındaki sözleşmelerde** yaşar: neyin bir eylem olarak sayıldığı, hangi gözlemlerin güvenilir olduğu, bunları kimin değerlendirdiği, hangi durumun hayatta kaldığı ve yürütmenin tam olarak ne zaman sona erdiği.
+
+<LoopEngineeringLab content={{
+  eyebrow: "Döngü kontrolü / etkileşimli simülatör",
+  title: "Çalışan bir geri bildirim döngüsünden geçin",
+  description: "Bir görev seçin ve her seferinde bir sinyali ilerletin. İlerlemenin, modele bitmiş gibi görünüp görünmediğini sormaktan değil, çevresel kanıtlardan ve açık değerlendirmelerden nasıl geldiğine dikkat edin.",
+  chooseScenarioLabel: "Bir döngü seçin",
+  goalLabel: "Amaç",
+  stopRuleLabel: "Kuralı durdur",
+  evidenceLabel: "Güvenilir kanıt",
+  iterationLabel: "Yineleme",
+  progressLabel: "Doğrulanmış ilerleme",
+  openIssuesLabel: "Açık sorunlar",
+  currentSignalLabel: "Akım sinyali",
+  advanceLabel: "Bir adım ilerleyin",
+  nextIterationLabel: "Sonraki yinelemeye başla",
+  resetLabel: "Döngüyü sıfırla",
+  completeLabel: "Hedef doğrulandı",
+  completeDescription: "Başarı kriterleri karşılanır, kanıtlar kaydedilir ve başka bir döngüyü harcamak yerine döngü durdurulur.",
+  stages: [
+    { id: "frame", label: "Çerçeve", verb: "Sözleşmeyi tekrar okuyun" },
+    { id: "act", label: "Davranmak", verb: "Sınırlı bir hamle yapın" },
+    { id: "observe", label: "Gözlemlemek", verb: "Harici geri bildirimleri okuyun" },
+    { id: "evaluate", label: "Değerlendirmek", verb: "Puan anahtarını uygula" },
+    { id: "adapt", label: "Uyarla", verb: "Sonraki hamleyi güncelle" },
+  ],
+  scenarios: [
+    {
+      id: "code",
+      label: "Ödeme hatasını onarın",
+      goal: "Geçerli indirim davranışını değiştirmeden ödeme toplamlarını düzeltin.",
+      stopRule: "Hedeflenen regresyon geçişleri, tam ödeme paketi geçişleri ve tüylerin temiz olması veya üç denemeden sonra durup yükseltme.",
+      evidence: "Çoğaltma adımları, test çıktısı, kod farkı ve son regresyon paketi.",
+      cycles: [
+        {
+          action: "Bildirilen toplamı yeniden oluşturun ve vergi artı yüzde indirimi için başarısız bir test ekleyin.",
+          observation: "Test, yalnızca verginin indirim uygulanmadan önce yuvarlanması durumunda bir sent başarısız olur.",
+          evaluation: "Hata deterministik bir sinyalle yeniden üretiliyor ancak kaynağı henüz düzeltilmedi.",
+          adaptation: "Yuvarlama sınırını inceleyin ve yalnızca sıra-toplam hesaplama yolunu değiştirin.",
+          progress: 34,
+          openIssues: 2,
+        },
+        {
+          action: "Yuvarlamayı nihai parasal sınıra taşıyın ve hedeflenen ödeme testlerini çalıştırın.",
+          observation: "Regresyon başarılı oluyor ancak bir kupon entegrasyon testi artık sabit miktardaki indirimde başarısız oluyor.",
+          evaluation: "İlk belirti düzeldi ancak değişiklik çok geniş. Durdurma kuralı karşılanmıyor.",
+          adaptation: "Yamayı daraltın ve vergi yuvarlamayı kupon yuvarlamadan ayıran bir durum ekleyin.",
+          progress: 71,
+          openIssues: 1,
+        },
+        {
+          action: "Dar hesaplama düzeltmesini uygulayın, ardından regresyonu, tam ödeme paketini ve tüy bırakmayı çalıştırın.",
+          observation: "Tüm kontroller geçiyor. Fark, bir hesaplama fonksiyonuna ve yeni regresyon testine dokunuyor.",
+          evaluation: "Her başarı kriterinin bağımsız kanıtları vardır ve hiçbir bütçe sınırı aşılmamıştır.",
+          adaptation: "Durun, test çıktısını koruyun ve küçük farkı bir insan incelemeciye verin.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+    {
+      id: "research",
+      label: "Bir araştırma iddiasını doğrulama",
+      goal: "Uzaktan çalışmanın her zaman ekip verimliliğini artırdığı iddiasını değerlendirin.",
+      stopRule: "Anlaşmazlıkların ve sınırlamaların belirtildiği, en az üç güvenilir kaynak tarafından desteklenen kalibre edilmiş bir sonuca ulaşın.",
+      evidence: "Doğrudan kaynak bağlantıları, yayın tarihleri, çalışma yöntemleri, örnek boyutları ve alıntılanan ölçümler.",
+      cycles: [
+        {
+          action: "Güncel kanıtları arayın ve en çok tekrarlanan verimlilik istatistiklerini kaynağına kadar takip edin.",
+          observation: "Çoğu makale, bir satıcı anketini, anketini veya ham örneğini bağlamadan tekrarlar.",
+          evaluation: "Kanıt popülerdir ancak mutlak bir iddiayı destekleyecek kadar güçlü değildir.",
+          adaptation: "Hakemli çalışmalara ve kamuya açık veri kümelerine öncelik verin; aykırı bulguları da arayın.",
+          progress: 28,
+          openIssues: 3,
+        },
+        {
+          action: "Hakemli iki çalışmayı ulusal işgücü veri kümesiyle karşılaştırın.",
+          observation: "Sonuçlar görev türüne, ölçüm yöntemine ve işin tamamen uzaktan mı yoksa hibrit mi yapıldığına göre değişiklik gösterir.",
+          evaluation: "'Her zaman' kelimesi çelişiyor. Koşullu bir sonuç savunulabilir hale geliyor.",
+          adaptation: "Çalışmaların çıktıyı, çalışılan saatleri ve algılanan üretkenliği ayırt edip etmediğini kontrol edin.",
+          progress: 68,
+          openIssues: 1,
+        },
+        {
+          action: "Bir kanıt tablosu oluşturun ve her iddiayı orijinal kaynağa göre doğrulayın.",
+          observation: "Kaynaklar karışık etkileri destekliyor ve özerklik, koordinasyon ve görev türünü temel değişkenler olarak tanımlıyor.",
+          evaluation: "Sonuç destekleniyor, belirsizlik görülüyor ve kaynak eşiği karşılanıyor.",
+          adaptation: "Nitelikli bir cevapla durun ve kanıt tablosunu gözden geçirmek üzere saklayın.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+    {
+      id: "writing",
+      label: "Lansman e-postasını cilalayın",
+      goal: "Avantajını açıklayan ve nitelikli demo tıklamaları kazandıran kısa bir lansman e-postası oluşturun.",
+      stopRule: "Sesli değerlendirme listesini iletin, 140 kelimenin altında kalın, net bir harekete geçirici mesaj ekleyin ve gerçeklere dayalı bir incelemeden sağ çıkın.",
+      evidence: "Kelime sayısı, değerlendirme listesi puanları, bağlantı doğrulama, kaynak ürün gerçekleri ve inceleme notları.",
+      cycles: [
+        {
+          action: "Ürün özetinin taslağını çıkarın ve sonucu izleyici ve ses değerlendirme tablosuna göre puanlayın.",
+          observation: "Taslak 204 kelimeden oluşuyor, özelliklerle açılıyor ve birbiriyle yarışan iki harekete geçirici mesaj içeriyor.",
+          evaluation: "Gerçekler doğrudur ancak hiyerarşi ve uzunluk kriterleri başarısızdır.",
+          adaptation: "Müşteri sonucuna öncülük edin, ikincil eylemi kaldırın ve uygulama ayrıntılarını kesin.",
+          progress: 41,
+          openIssues: 3,
+        },
+        {
+          action: "Açıklığı yeniden yazın ve gövdeyi problem-fayda-kanıtlı bir diziye sıkıştırın.",
+          observation: "E-posta 126 kelimeden oluşuyor ve bir CTA içeriyor, ancak kanıt cümlesi beta sonucunu abartıyor.",
+          evaluation: "Yapı geçer. Gerçek kalibrasyon hala değerlendirme tablosunda başarısız oluyor.",
+          adaptation: "Geniş iddiayı ölçülen beta sonucuyla değiştirin ve nihai bir doğruluk kontrolü talep edin.",
+          progress: 79,
+          openIssues: 1,
+        },
+        {
+          action: "Doğrulanmış metriği ekleyin, bağlantıyı doğrulayın ve değerlendirme listesinin tamamını bir kez daha çalıştırın.",
+          observation: "E-posta 132 kelimeden oluşur, bağlantı çözülür, bilgiler özetle eşleşir ve her değerlendirme listesi öğesi geçer.",
+          evaluation: "Eser, incelenebilir kanıtlarla tanımlanan kalite çıtasını karşılıyor.",
+          adaptation: "Onaylanan sürümü durdurup kampanya sahibine gönderin.",
+          progress: 100,
+          openIssues: 0,
+        },
+      ],
+    },
+  ],
+}} />
+
+## Önce Döngü Sözleşmesini Yazın
+
+Bir model veya çerçeve seçmeden önce küçük bir sözleşme yazın. Bu alanlar belirsizse döngü, belirsizliği tekrarlanan maliyete dönüştürecektir.
+
+```yaml
+goal: "Hangi gözlemlenebilir durum gerçek olmalı?"
+inputs: "Döngüyü ne başlatır?"
+state: "Yinelemeler arasında hangi gerçekler ve girişimler devam ediyor?"
+actions: "Sistem hangi araçları ve hangi izinlerle kullanabilir?"
+observations: "Bu eylemlerden hangi dış sinyaller geliyor?"
+evaluator: "Hangi değerlendirme listesi veya deterministik kontroller sonucu değerlendiriyor?"
+success: "Hedefin tamamlandığını kanıtlayan deliller nelerdir?"
+failure: "Hangi koşullar iyileşmeyi veya insan yardımını gerektirir?"
+budget: "Maksimum dönüş, süre, jeton, para veya yan etkiler"
+```
+
+<Callout type="warning" title="Çıkışı Olmayan Bir Döngü Bir Arıza Modudur">
+Her zaman üç çıkışı tanımlayın: Kanıtlar hedefi karşıladığında **başarı**, kurtarma artık yararlı olmadığında **başarısızlık** ve döngü izin verilen maliyet veya risk sınırına ulaştığında **bütçe tükendi**.
+</Callout>
+
+## Gözlemler Dünyadan Gelmeli
+
+“Bu doğru görünüyor” diyen model güçlü bir kanıt değil. Yararlı bir gözlem, değerlendirilen cevabın dışındaki bir şey tarafından üretilir.
+
+<table>
+  <thead>
+    <tr>
+      <th>Görev</th>
+      <th>Zayıf gözlem</th>
+      <th>Güçlü gözlem</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Kod onarımı</td>
+      <td>"Düzeltme işe yaramalı."</td>
+      <td>Orijinal hata yeniden üretilir, ardından regresyon ve tam paket geçişi yapılır.</td>
+    </tr>
+    <tr>
+      <td>Araştırma</td>
+      <td>"Birçok kaynak aynı fikirde."</td>
+      <td>İddialar, tarihlerin, yöntemlerin ve anlaşmazlıkların kaydedildiği orijinal kaynaklara bağlantı verir.</td>
+    </tr>
+    <tr>
+      <td>Veri çıkarma</td>
+      <td>"JSON geçerli görünüyor."</td>
+      <td>Şema doğrulama geçişleri ve örneklenmiş kayıtlar kaynakla eşleşiyor.</td>
+    </tr>
+    <tr>
+      <td>İçerik</td>
+      <td>"Metin net görünüyor."</td>
+      <td>Adlandırılmış bir değerlendirme tablosundan, olgusal incelemeden, bağlantı kontrollerinden ve kitle testinden geçer.</td>
+    </tr>
+    <tr>
+      <td>İşlemler</td>
+      <td>“İstek başarılı oldu.”</td>
+      <td>Harici sistem beklenen durumu döndürür ve bir denetim kaydı mevcuttur.</td>
+    </tr>
+  </tbody>
+</table>
+
+Araçların önemli olmasının nedeni budur: testler, tarayıcılar, veritabanları, doğrulayıcılar ve insan incelemesi, dahili bir tahmini gözlemlenebilir bir sonuca dönüştürür.
+
+## Yapımcıyı Kontrolörden Ayırın
+
+Düşük riskli işler için bir model taslağı hazırlayabilir ve kendi kendini inceleyebilir. Önemli işler için, farklı bir işe ve sınırlı yetkiye sahip bir denetleyici kullanın.
+
+<InfoGrid columns={2} items={[
+  { label: "Yapımcı", description: "Değişikliği önerir, eylem araçlarını çağırır ve hangi kanıtların toplanması gerektiğini açıklar.", color: "amber" },
+  { label: "Denetleyici", description: "Hedefi, eseri ve kanıtı alır; değerlendirme tablosunu uygular; not verdiği çalışmayı sessizce yeniden yazamaz.", color: "green" },
+]} />
+
+Denetleyicinin başka bir yapay zeka olması gerekmez. Mevcut en belirleyici değerlendiriciyi tercih edin:
+
+1. **Tam kontroller** — türler, şemalar, kısıtlamalar, izinler, karmalar
+2. **Yürütülebilir kontroller** — testler, linterler, simülasyonlar, bağlantı doğrulama
+3. **Değerlendirme anahtarı kontrolleri** — adlandırılmış kriterleri kullanan bağımsız bir model veya insan
+4. **Sonuç kontrolleri** — zaman içindeki gerçek kullanıcı davranışı veya üretim ölçümleri
+
+<Callout type="tip" title="Güven Kanıt Değildir">
+Yapıyı oluşturan aynı model tarafından oluşturulan güven puanı hâlâ bir model çıktısıdır. Bunu bir kanıt olarak değil, bir yönlendirme ipucu olarak ele alın.
+</Callout>
+
+## Devlet Döngünün Omurgasıdır
+
+Bağlam, modelin **bu dönüşte** gördüğü şeydir. Durum, bir sonraki dönüşün işi tekrarlamadan veya unutmadan devam etmesini sağlayan kompakt kayıttır.
+
+<Checklist title="Faydalı Döngü Durumu" items={[
+  { text: "Mevcut hedef ve kabul kriterleri" },
+  { text: "Halihazırda denenen eylemler ve bunların gözlemlenebilir sonuçları" },
+  { text: "Versiyonlar veya sabit referanslarla üretilen eserler" },
+  { text: "Değerlendirici kararları ve çözülmemiş sorunlar" },
+  { text: "Bütçe tüketildi ve izinler hâlâ mevcut" },
+  { text: "Devam etme, durdurma veya yükseltme nedeni" },
+]} />
+
+Bir modelin özel düşünce zincirini değil, kısa ve öz kararları ve kanıtları saklayın. İyi durum küçüktür, denetlenebilirdir ve sürdürülmesi güvenlidir.
+
+## Ortak Döngü Şekilleri
+
+### Onarım Döngüsü
+
+`çoğalt → bir şeyi değiştir → kontrolleri çalıştır → teşhis et → tekrarla veya durdur'
+
+Kod, yapılandırma, veri temizleme ve yürütülebilir geri bildirim içeren tüm görevler için en iyisi.
+
+### Değerlendirici-Optimize Edici Döngüsü
+
+`oluştur → değerlendirme listesiyle puanlayın → hedeflenen geri bildirimi döndürün → gözden geçirin`
+
+Yazma, çeviri, tasarım eleştirisi ve açıkça ifade edilen geri bildirimlerle kalitesi artan çıktılar için en iyisi.
+
+### Araştırma Döngüsü
+
+`arayın → kaynakları inceleyin → boşlukları veya çatışmaları belirleyin → tekrar arayın → sentezleyin'
+
+Tamlığın önceden bilinmediği durumlarda en iyisi. Durdurma kuralı, arama sonuçlarının sayısını değil, kanıt kapsamını ölçmelidir.
+
+### İnsan Kapılı Döngü
+
+`hazırla → otomatik olarak doğrula → yüksek riskli eylemden önce duraklat → insan tarafından onaylanır veya yönlendirilir`
+
+Ödemeler, yayınlama, silme, erişim değişiklikleri, tıbbi veya hukuki kararlar ve diğer önemli eylemler için en iyisi.
+
+## Tasarlanacak Arıza Modları
+
+<table>
+  <thead>
+    <tr>
+      <th>Başarısızlık</th>
+      <th>Ne oldu</th>
+      <th>Mühendislik yanıtı</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Sonsuz yeniden deneme</td>
+      <td>Döngünün ölçülebilir bir başarısı veya bütçe çıkışı yok.</td>
+      <td>Açık terminal durumları ve sabit yineleme sınırı ekleyin.</td>
+    </tr>
+    <tr>
+      <td>Kendini kutlama</td>
+      <td>Yapımcı, kanıt olmadan kendi makul cevabını kabul ediyor.</td>
+      <td>Belirleyici kontroller veya bağımsız bir denetleyici kullanın.</td>
+    </tr>
+    <tr>
+      <td>Bağlam kartopu</td>
+      <td>Her yineleme, model sinyali kaybedene kadar her şeyi ekler.</td>
+      <td>Yapılandırılmış durumu sürdürün ve yalnızca ilgili bağlamı yeniden oluşturun.</td>
+    </tr>
+    <tr>
+      <td>Çarpışma</td>
+      <td>Döngü iki düzeltme arasında geçiş yapar.</td>
+      <td>Tekrarlanan durumları tespit edin ve farklı bir strateji veya üst kademeye iletme gerektirir.</td>
+    </tr>
+    <tr>
+      <td>Hedef sapması</td>
+      <td>Yerel iyileştirmeler orijinal hedefin yerini alır.</td>
+      <td>Her döngüde değişmez hedefi ve kabul kriterlerini yeniden okuyun.</td>
+    </tr>
+    <tr>
+      <td>Güvenli olmayan tekrarlama</td>
+      <td>Geri döndürülebilir bir hata tekrarlandığında zararlı hale gelir.</td>
+      <td>İzinleri, yan etkileri, oranı, harcamayı ve patlama yarıçapını sınırlayın.</td>
+    </tr>
+  </tbody>
+</table>
+
+## Minimal Bir Uygulama
+
+```typescript
+let state = initialize(goal, acceptanceCriteria, budget);
+
+while (state.budget.remaining > 0) {
+  const context = assembleRelevantContext(state);
+  const proposedAction = await maker.chooseAction(context);
+  const observation = await tools.executeWithinPolicy(proposedAction);
+  const verdict = await evaluator.check({ goal, observation, state });
+
+  state = recordIteration(state, { proposedAction, observation, verdict });
+
+  if (verdict.status === "passed") return complete(state);
+  if (verdict.status === "unsafe" || verdict.status === "blocked") {
+    return escalateToHuman(state);
+  }
+
+  state = adaptPlan(state, verdict.feedback);
+}
+
+return stopWithBudgetReport(state);
+```
+
+Kod işin kolay kısmı. Zor sorular alan sorularıdır: Hangi test hatanın giderildiğini kanıtlar? Hangi kaynak yetkilidir? Hangi eylem geri döndürülebilir? Son adımı kim onaylayabilir? Bu kararlar döngü mühendisliğinin asıl eseridir.
+
+## Alıştırma: Döngü Tasarlama
+
+<TryIt
+  title="Döngü Sözleşmesi Taslağı"
+  description="Değişkenleri kendi çalışmanızdaki yinelenen bir görevle değiştirin. Yapay zekadan zayıf kanıtlara ve belirsiz durdurma kurallarına itiraz etmesini isteyin."
+  prompt={`Bu görev için sınırlı bir yapay zeka çalışma döngüsü tasarlayın:
+
+GÖREV: \${task:her sabah yeni müşteri destek sorunlarını önceliklendirmek}
+
+Tanımla:
+1. Gözlemlenebilir hedef
+2. Tetikleyici ve gerekli girişler
+3. İzin verilen eylemler ve araç izinleri
+4. Dış ortamdan güvenilir gözlemler
+5. Değerlendirici ve değerlendirme tablosu
+6. Yinelemeler arasında devam eden durum
+7. Başarı, başarısızlık ve bütçe tükenen çıkışlar
+8. Riskli eylemler için insan onay kapıları
+9. Her yinelemeyi denetlenebilir kılan bir izleme formatı
+
+Daha sonra tasarımınızdaki en muhtemel üç arıza modunu belirleyin ve bunları önlemek için döngüyü revize edin.`}
+/>
+
+<Quiz
+  question="Bir temsilci kodu düzenler, farkı yeniden okur ve hatanın düzeltildiğini söyler. Döngünün en önemli eksik parçası nedir?"
+  options={[
+    "Daha uzun bir sistem istemi",
+    "Durdurma kuralına göre değerlendirilen harici bir gözlem",
+    "İkinci bir düzenleme geçişi",
+    "Daha büyük bir bağlam penceresi"
+  ]}
+  correctIndex={1}
+  explanation="Temsilci bir eser üretip inceledi ancak bağımsız kanıt toplamadı. Başarısızlığın yeniden üretilmesi ve ilgili testlerin çalıştırılması, bir durdurma kuralının değerlendirebileceği gözlemlenebilir bir sinyal oluşturacaktır."
+/>
+
+## Ek Okuma
+
+- [Döngü Mühendisliği — Addy Osmani](https://addyosmani.com/blog/loop-engineering/) — manuel takip istemlerinin tasarlanmış bir sistemle değiştirilmesine ilişkin son çerçeve, ayrıca doğrulama ve insan sorumluluğuna ilişkin pratik uyarılar
+- [Etkili Aracılar Oluşturmak — Antropik](https://www.anthropic.com/engineering/building-effective-agents) — değerlendirici-optimizasyon iş akışları, çevresel geri bildirim, durdurma koşulları ve aracı karmaşıklığının ne zaman haklı olduğuna dair rehberlik
+- [Yapı Aracıları İçin Pratik Kılavuz — OpenAI](https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/) — aracı çalıştırmaları, çıkış koşulları, araçlar, korkuluklar ve insan müdahalesi
+- [ReAct: Dil Modellerinde Akıl Yürütme ve Harekete Geçmenin Sinerjileştirilmesi](https://arxiv.org/abs/2210.03629) — dış ortamdan gözlemlerle eylemleri serpiştirme üzerine temel araştırma
+
+## Özet
+
+<Callout type="tip" title="Yalnızca İstemi Değil, Geri Bildirimi Oluşturun">
+Güvenilir bir döngünün ölçülebilir bir hedefi, sınırlı eylemleri, güvenilir gözlemleri, açık bir değerlendiricisi, kompakt durumu, güvenli çıkışları ve sonuçların gerektirdiği durumlarda insan muhakemesi vardır. Model döngünün içindedir; döngüden mühendis sorumlu olmaya devam eder.
+</Callout>
