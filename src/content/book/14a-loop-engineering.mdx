@@ -3,7 +3,7 @@ Context engineering decides **what the model can see**. Loop engineering decides
 Instead of a person repeatedly reading an answer and writing the next prompt, a loop turns that follow-up work into a designed system. It gives an AI a goal, lets it act, observes real feedback, evaluates the result, and either adapts or stops.
 
 <Callout type="info" title="The Short Definition">
-Loop engineering is the practice of designing the feedback cycle around an AI system: the goal, actions, observations, evaluation, state, guardrails, and stopping rules that move work toward a verifiable result.
+Loop engineering is the practice of designing the feedback cycle around an AI system: the goal, actions, observations, evaluation, state, guardrails, and stop rules that move work toward a verifiable result.
 </Callout>
 
 ## From a Good Prompt to a Good Loop
@@ -63,30 +63,30 @@ The loop is not the arrows. The engineering lives in the **contracts between the
     {
       id: "code",
       label: "Repair a checkout bug",
-      goal: "Correct checkout totals without changing valid discount behavior.",
-      stopRule: "Targeted regression passes, full checkout suite passes, and lint is clean—or stop after three attempts and escalate.",
+      goal: "Fix the checkout totals without changing valid discount behavior.",
+      stopRule: "The targeted regression test passes, the full checkout suite passes, and lint is clean—or three attempts are exhausted and the loop escalates.",
       evidence: "Reproduction steps, test output, the code diff, and the final regression suite.",
       cycles: [
         {
-          action: "Reproduce the reported total and add a failing test for tax plus percentage discount.",
+          action: "Reproduce the reported total and add a failing test for tax plus a percentage discount.",
           observation: "The test fails by one cent only when tax is rounded before the discount is applied.",
-          evaluation: "The bug is reproduced with a deterministic signal, but its source is not fixed yet.",
+          evaluation: "The bug is reproduced with a deterministic signal, but the root cause is not fixed yet.",
           adaptation: "Inspect the rounding boundary and change only the order-total calculation path.",
           progress: 34,
           openIssues: 2,
         },
         {
           action: "Move rounding to the final monetary boundary and run targeted checkout tests.",
-          observation: "The regression passes, but one coupon integration test now fails on a fixed-amount discount.",
+          observation: "The regression test passes, but one coupon integration test now fails on a fixed-amount discount.",
           evaluation: "The first symptom is fixed, but the change is too broad. The stop rule is not satisfied.",
           adaptation: "Narrow the patch and add a case that separates tax rounding from coupon rounding.",
           progress: 71,
           openIssues: 1,
         },
         {
-          action: "Apply the narrow calculation fix, then run the regression, full checkout suite, and lint.",
+          action: "Apply the narrow calculation fix, then run the regression test, the full checkout suite, and lint.",
           observation: "All checks pass. The diff touches one calculation function and the new regression test.",
-          evaluation: "Every success criterion has independent evidence and no budget limit was exceeded.",
+          evaluation: "Every success criterion has independent evidence, and no budget limit was exceeded.",
           adaptation: "Stop, preserve the test output, and hand the small diff to a human reviewer.",
           progress: 100,
           openIssues: 0,
@@ -97,7 +97,7 @@ The loop is not the arrows. The engineering lives in the **contracts between the
       id: "research",
       label: "Verify a research claim",
       goal: "Assess the claim that remote work always increases team productivity.",
-      stopRule: "Reach a calibrated conclusion supported by at least three credible sources, with disagreements and limitations stated.",
+      stopRule: "A calibrated conclusion is supported by at least three credible sources, with disagreements and limitations stated.",
       evidence: "Direct source links, publication dates, study methods, sample sizes, and quoted metrics.",
       cycles: [
         {
@@ -111,7 +111,7 @@ The loop is not the arrows. The engineering lives in the **contracts between the
         {
           action: "Compare two peer-reviewed studies with a national labor dataset.",
           observation: "Results vary by task type, measurement method, and whether work is fully remote or hybrid.",
-          evaluation: "The word 'always' is contradicted. A conditional conclusion is becoming defensible.",
+          evaluation: "The evidence contradicts the word 'always'. A conditional conclusion is becoming defensible.",
           adaptation: "Check whether the studies distinguish output, hours worked, and perceived productivity.",
           progress: 68,
           openIssues: 1,
@@ -130,7 +130,7 @@ The loop is not the arrows. The engineering lives in the **contracts between the
       id: "writing",
       label: "Polish a launch email",
       goal: "Create a concise launch email that explains the benefit and earns qualified demo clicks.",
-      stopRule: "Pass the voice rubric, stay under 140 words, contain one clear call to action, and survive a factual review.",
+      stopRule: "The email passes the voice rubric, stays under 140 words, contains one clear call to action, and survives a factual review.",
       evidence: "Word count, rubric scores, link validation, source product facts, and reviewer notes.",
       cycles: [
         {
@@ -142,7 +142,7 @@ The loop is not the arrows. The engineering lives in the **contracts between the
           openIssues: 3,
         },
         {
-          action: "Rewrite the opening and compress the body to one problem-benefit-proof sequence.",
+          action: "Rewrite the opening and compress the body into one problem-benefit-proof sequence.",
           observation: "The email is 126 words and has one CTA, but the proof sentence overstates a beta result.",
           evaluation: "Structure passes. Factual calibration still fails the rubric.",
           adaptation: "Replace the broad claim with the measured beta result and request a final fact check.",
@@ -198,7 +198,7 @@ The model saying “this looks correct” is not strong evidence. A useful obser
     <tr>
       <td>Code repair</td>
       <td>“The fix should work.”</td>
-      <td>The original failure is reproduced, then the regression and full suite pass.</td>
+      <td>The original failure is reproduced, then the regression test and the full suite pass.</td>
     </tr>
     <tr>
       <td>Research</td>
@@ -360,7 +360,7 @@ The code is the easy part. The hard questions are domain questions: Which test p
 
 <TryIt
   title="Draft a Loop Contract"
-  description="Replace the variables with a recurring task from your own work. Ask the AI to challenge weak evidence and ambiguous stopping rules."
+  description="Replace the variables with a recurring task from your own work. Ask the AI to challenge weak evidence and ambiguous stop rules."
   prompt={`Design a bounded AI work loop for this task:
 
 TASK: \${task:triage new customer support issues each morning}

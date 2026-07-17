@@ -1831,7 +1831,7 @@
       "12-handling-edge-cases": "处理意外输入",
       "13-multimodal-prompting": "处理图像、音频和视频",
       "14-context-engineering": "RAG、嵌入、函数调用和MCP",
-      "14a-loop-engineering": "设计能够行动、验证、适应并知道何时停止的反馈循环",
+      "14a-loop-engineering": "设计能够行动、验证、调整并知道何时停止的反馈循环",
       "25-agents-and-skills": "使用可重用技能包构建AI代理",
       "15-common-pitfalls": "要避免的错误",
       "16-ethics-responsible-use": "AI中的伦理考虑",

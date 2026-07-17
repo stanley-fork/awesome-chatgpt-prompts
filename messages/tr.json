@@ -1831,7 +1831,7 @@
       "12-handling-edge-cases": "Beklenmedik girdilerle başa çıkma",
       "13-multimodal-prompting": "Görüntü, ses ve video ile çalışma",
       "14-context-engineering": "RAG, embedding'ler, fonksiyon çağırma ve MCP",
-      "14a-loop-engineering": "Harekete geçen, doğrulayan, uyarlanan ve ne zaman duracağını bilen geri bildirim döngüleri tasarlama",
+      "14a-loop-engineering": "Harekete geçen, doğrulayan, uyum sağlayan ve ne zaman duracağını bilen geri bildirim döngüleri tasarlama",
       "25-agents-and-skills": "Yeniden kullanılabilir yetenek paketleriyle AI ajanları oluşturma",
       "15-common-pitfalls": "Kaçınılması gereken hatalar",
       "16-ethics-responsible-use": "AI'da etik değerlendirmeler",
