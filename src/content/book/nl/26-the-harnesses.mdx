@@ -1,0 +1,235 @@
+Je vraagt een AI om een bug op te lossen. De AI leest het project, past een bestand aan, voert een test uit, ziet een fout en probeert het opnieuw. Het model is een deel van dit proces. Maar er moet ook iets zijn dat de bestanden opent, de opdrachten uitvoert en de resultaten teruggeeft.
+
+Die software rond het model is de **harness**. Nu je agents en skills kent, is het nuttig om te kijken naar het systeem dat ze laat samenwerken.
+
+## Wat is een harness?
+
+Een **agent-harness** is de software die een AI-agent uitvoert. Die bereidt de context van het model voor, stelt tools beschikbaar, verwerkt toolverzoeken en beheert de stappen van een taak. Afhankelijk van de toepassing kan de harness ook machtigingen, opgeslagen voortgang, nieuwe pogingen en limieten beheren.
+
+De termen *agent*, *framework* en *harness* worden soms losjes gebruikt. In dit hoofdstuk maken we dit onderscheid:
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Onderdeel</th>
+      <th scope="col">Wat het doet</th>
+      <th scope="col">Voorbeeld</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Model</td>
+      <td>Produceert een antwoord of een verzoek om een tool te gebruiken</td>
+      <td>Stelt voor om een bestand te lezen</td>
+    </tr>
+    <tr>
+      <td>Harness</td>
+      <td>Voert het proces rond het model uit</td>
+      <td>Controleert de toegang, leest het bestand en geeft de inhoud terug</td>
+    </tr>
+    <tr>
+      <td>Agent</td>
+      <td>Het werkende systeem dat met een model en een harness een doel nastreeft</td>
+      <td>Onderzoekt een bug en lost die op</td>
+    </tr>
+    <tr>
+      <td>Prompt</td>
+      <td>Geeft instructies voor de taak of het gedrag</td>
+      <td>'Los deze bug op en vertel welke tests je hebt uitgevoerd'</td>
+    </tr>
+    <tr>
+      <td>Skill</td>
+      <td>Bundelt herbruikbare instructies en optionele hulpmiddelen</td>
+      <td>Een procedure voor het oplossen van bugs met een testchecklist</td>
+    </tr>
+    <tr>
+      <td>Tool</td>
+      <td>Voert een specifieke bewerking uit</td>
+      <td>Leest een bestand of voert een test uit</td>
+    </tr>
+  </tbody>
+</table>
+
+Een harness kan een kleine lus in je eigen toepassing zijn, of onderdeel van een grotere programmeerassistent. Er zijn niet per se meerdere agents of een ingewikkeld framework nodig. Anthropic beschrijft dit verschil tussen een agent en zijn harness in zijn [gids voor het evalueren van agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents).
+
+<Callout type="info" title="Twee betekenissen van hetzelfde woord">
+Een agent-harness voert het werk van de agent uit. Een evaluatieharness voert testtaken uit en meet hoe goed dat systeem presteert. Ze kunnen samenwerken, maar hebben verschillende taken.
+</Callout>
+
+## Hoe de lus werkt
+
+Stel dat de taak is om een zoekpagina zonder resultaten te verbeteren. Een typische lus ziet er zo uit:
+
+1. **Context voorbereiden.** Neem het verzoek, de projectinstructies, relevante skill-instructies en definities van beschikbare tools op.
+2. **Het model aanroepen.** Het kan direct antwoorden of een tool aanvragen, bijvoorbeeld om de zoekcomponent te lezen.
+3. **Controleren en uitvoeren.** De harness valideert het verzoek en controleert de machtigingen voordat de tool wordt uitgevoerd.
+4. **De waarneming teruggeven.** De bestandsinhoud, opdrachtuitvoer of fout komt terug in de context van het model.
+5. **Doorgaan of stoppen.** Het model gebruikt die informatie voor de volgende stap. De harness handhaaft ook limieten en kan pauzeren voor invoer van de gebruiker.
+
+'Voer de tests uit' in een antwoord schrijven voert niets uit. Een echte tool moet de opdracht uitvoeren en het resultaat teruggeven. Dankzij die terugkoppeling kan een agent reageren op wat er echt is gebeurd. Zie Anthropics [uitleg over workflows voor agents](https://www.anthropic.com/engineering/building-effective-agents).
+
+### Probeer dezelfde taak met andere instellingen
+
+Verander één instelling en doorloop de uitvoering stap voor stap. Kijk wat er verandert in de context, het toolverzoek en het eindrapport.
+
+<HarnessDemo copy={{
+  title: "Binnen de harness",
+  description: "Een simulatie met een vast scenario. Hier worden geen AI-aanroepen, bestandsbewerkingen of opdrachten uitgevoerd. Echte agents kunnen andere routes volgen.",
+  taskLabel: "Taak",
+  task: "Verbeter de zoekpagina zonder resultaten.",
+  modelLabel: "Model",
+  model: "Bij elke uitvoering hetzelfde model",
+  controlsLabel: "Verander de instellingen",
+  resetHint: "Een gewijzigde instelling zet de uitvoering terug naar het begin. Een skill helpt bij de aanpak; niet elke taak heeft er een nodig.",
+  traceLabel: "Uitvoeringslogboek",
+  ready: "Gereed",
+  running: "Bezig",
+  complete: "Controles voltooid",
+  unverified: "Niet geverifieerd",
+  start: "Start de lus",
+  next: "Volgende stap",
+  reset: "Opnieuw beginnen",
+  controls: {
+    clearPrompt: { label: "Duidelijke prompt", description: "Bepaal het verwachte gedrag en de uit te voeren controles." },
+    skill: { label: "Skill voor bugoplossing", description: "Laad een herbruikbare procedure om de bug te reproduceren en te controleren." },
+    tools: { label: "Toegang tot tools", description: "Sta het lezen en bewerken van projectbestanden en het uitvoeren van tests toe." }
+  },
+  steps: {
+    context: {
+      title: "De harness bereidt de context voor",
+      clearPrompt: "Toon een nuttige melding bij lege zoekresultaten zonder het zoekgedrag te veranderen. Voer de zoektests uit en rapporteer de resultaten.",
+      vaguePrompt: "Verbeter de zoekpagina zonder resultaten. Het verwachte gedrag en de acceptatiecontroles zijn niet vastgelegd.",
+      skillLoaded: "Skill geladen: reproduceer het probleem, maak een kleine wijziging en controleer lege en niet-lege resultaten.",
+      skillMissing: "Geen skill geladen. Het model moet een aanpak kiezen op basis van de taak en de andere instructies."
+    },
+    request: {
+      title: "Het model vraagt een tool aan",
+      guided: "Het model volgt de skill en vraagt de zoekcomponent en de bijbehorende tests op om de lege toestand te reproduceren.",
+      unguided: "Het model vraagt de zoekcomponent op. Deze uitvoering bevat geen herbruikbare procedure."
+    },
+    permission: {
+      title: "De harness controleert de toegang",
+      allowed: "De gevraagde projectbewerkingen zijn toegestaan in deze simulatie. De harness stuurt de toolaanroep door.",
+      blocked: "Projecttools zijn niet beschikbaar. Een verzoek kan geen bestanden lezen of veranderen, en een prompt kan geen toegang verlenen."
+    },
+    observation: {
+      title: "Toolresultaten gaan terug naar het model",
+      guided: "De component en de tests laten een lege toestand zonder inhoud zien. Het model bereidt een kleine wijziging voor en controleert zowel lege als gevulde resultaten.",
+      unguided: "De component laat een lege toestand zonder inhoud zien. Het model bereidt een wijziging voor met de instructies die het heeft.",
+      unavailable: "Er zijn geen bestandsinhoud of testresultaten beschikbaar. Het model kan advies geven of om de ontbrekende informatie vragen."
+    },
+    review: {
+      title: "De lus controleert het werk",
+      checked: "Na de toegestane bewerking geeft de testtool geslaagde zoekcontroles terug. Het model kan dat bewijs vergelijken met het gevraagde gedrag.",
+      unclear: "Er is een wijziging gemaakt, maar voor deze uitvoering zijn geen acceptatiecontroles afgesproken. Een bestandswijziging alleen bewijst niet dat de taak klaar is.",
+      unavailable: "De harness heeft geen uitvoeringsbewijs. Het model mag geen bestandswijziging of geslaagde tests melden."
+    },
+    finish: {
+      title: "De uitvoering stopt en rapporteert",
+      verified: "Het gesimuleerde rapport noemt de wijziging en de geslaagde controles. Deze controles leveren bewijs, maar garanderen niet dat er geen bugs meer zijn.",
+      unverified: "Het gesimuleerde rapport legt uit wat nog niet is geverifieerd en wat er nu nodig is. Het beweert niet dat de oplossing is bevestigd."
+    }
+  }
+}} />
+
+Dit zijn voorbeelden van uitkomsten, geen regels voor wat elk model zal doen. Een model kan ook bij een vage prompt een nuttige vraag stellen. Duidelijke instructies maken je verwachtingen makkelijker te volgen en te controleren.
+
+## Waarom prompts belangrijk zijn binnen een harness
+
+Een harness geeft het model een manier om te handelen. Je prompts leggen uit welke acties nuttig zijn. Zonder duidelijk doel kan een agent veel stappen besteden aan werk dat je niet nodig had.
+
+Het huidige verzoek is maar één deel van de instructies. Een toepassing kan ook een systeemprompt, projectrichtlijnen, toolbeschrijvingen en instructies uit een geladen skill toevoegen. De harness bepaalt hoe die in de context komen; het model volgt de instructiehiërarchie van dat systeem.
+
+<Compare
+  before={{ label: "Onduidelijke taak", content: "Repareer de zoekfunctie. Maak hem beter." }}
+  after={{ label: "Een taak die de agent kan controleren", content: "Toon een nuttige melding als de zoekfunctie geen resultaten vindt. Laat het zoekgedrag ongewijzigd. Volg de bestaande interfacepatronen en gebruik vertalingen voor nieuwe tekst. Voer de relevante tests uit. Rapporteer wat er is veranderd, welke controles zijn geslaagd en wat je niet kon verifiëren." }}
+/>
+
+Je hoeft niet elke klik of opdracht te beschrijven. Bepaal de uitkomst, relevante beperkingen en wanneer het werk klaar is. Laat de agent gewone stappen zelf kiezen als die flexibiliteit helpt.
+
+Ook toolbeschrijvingen horen bij prompting. Een tool met duidelijke invoer, uitvoer en grenzen is voor het model makkelijker correct te gebruiken. Meer tools toevoegen zonder ze uit te leggen kan verwarring veroorzaken.
+
+## Waar skills passen
+
+Een prompt beschrijft meestal de huidige taak. Een **skill** legt een methode vast die je voor verschillende taken wilt hergebruiken: hoe je een wijziging beoordeelt, een bug onderzoekt of een rapport voorbereidt.
+
+In het [Agent Skills-formaat](https://agentskills.io/specification) heeft een skill een `SKILL.md`-bestand en kan die scripts, referenties en andere bestanden bevatten. Een compatibele harness maakt skills vindbaar. Die kan eerst de namen en beschrijvingen aanbieden, de instructies van de gekozen skill laden wanneer ze relevant zijn en ondersteunende bestanden alleen lezen wanneer dat nodig is. Dit heet **geleidelijke onthulling**.
+
+<Collapsible title="Open een kleine skill voor bugoplossing">
+
+```markdown
+---
+name: verify-bug-fix
+description: Gebruik dit bij het oplossen van een reproduceerbare bug in een bestaand project.
+---
+
+1. Lees de projectinstructies en de relevante code.
+2. Reproduceer het gemelde gedrag of leg uit waarom dat niet lukt.
+3. Maak de kleinste wijziging die de oorzaak oplost.
+4. Voer relevante controles uit, ook voor een vergelijkbaar geval dat nog moet werken.
+5. Rapporteer de wijziging, het bewijs en de resterende onzekerheid.
+
+Als een benodigde tool niet beschikbaar is, leg dan de beperking uit.
+Beschrijf een niet-uitgevoerde controle niet als geslaagd.
+```
+
+</Collapsible>
+
+De harness heeft nog steeds de tools en omgeving nodig die de skill verwacht. Een skill die een browsertest beschrijft, installeert geen browser. Een script kan afhankelijkheden nodig hebben. Instructies moeten mogelijk worden aangepast bij een overstap naar een andere harness met andere tools. Een skill laden traint het model ook niet en garandeert geen deskundigheid.
+
+Gebruik de taakprompt voor wat vandaag specifiek nodig is. Zet een terugkerende procedure in een skill. Bewaar gedeelde projectregels in de instructiebestanden die je harness ondersteunt. Zo hoef je niet in elk verzoek een lange, net iets andere checklist te kopiëren.
+
+<Quiz
+  question="Een skill zegt dat er browsertests moeten worden uitgevoerd, maar de harness heeft geen browsertool. Wat moet er gebeuren?"
+  options={[
+    "De skill maakt automatisch toegang tot een browser aan",
+    "De agent moet de beperking melden en een beschikbaar alternatief gebruiken of vragen om wat er nodig is",
+    "De agent kan de tests als geslaagd markeren na het lezen van de code",
+    "Een langere prompt maakt de browser beschikbaar"
+  ]}
+  correctIndex={1}
+  explanation="Een skill geeft instructies en mogelijk hulpmiddelen. De harness en de omgeving leveren de daadwerkelijke mogelijkheden. Het ontbreken van uitvoeringsbewijs moet zichtbaar blijven."
+/>
+
+## Instructies en machtigingen hebben verschillende taken
+
+'Bewerk geen bestanden buiten dit project' is een nuttige instructie. Een grens in het bestandssysteem die zulke schrijfacties blokkeert, is een afgedwongen controle. Betrouwbare opstellingen gebruiken beide.
+
+Machtigingen, sandboxing en goedkeuringscontroles moeten worden geïmplementeerd door de harness, de tools of de onderliggende omgeving. Een prompt alleen kan ze niet afdwingen. De [VS Code-documentatie over agentbeveiliging](https://code.visualstudio.com/docs/agents/run/security) geeft concrete voorbeelden van deze controles.
+
+Hetzelfde onderscheid geldt voor informatie die tools teruggeven. Een webpagina of een bestand in een repository kan tekst bevatten die op een instructie lijkt. Behandel die tekst als taakgegevens, tenzij die uit een vertrouwde instructiebron komt. Beperk de toegang tot wat het werk nodig heeft.
+
+<Quiz
+  question="Welke controle voorkomt echt dat een tool buiten een toegestane map schrijft?"
+  options={[
+    "De beperking in hoofdletters herhalen",
+    "De agent een voorzichtige persona geven",
+    "De mapgrens afdwingen in de tool of de uitvoeringsomgeving",
+    "Meer voorbeelden aan de skill toevoegen"
+  ]}
+  correctIndex={2}
+  explanation="Prompts sturen het gedrag. De tool of omgeving moet de toegangsgrens afdwingen, ook als het model een niet-toegestane actie aanvraagt."
+/>
+
+## Wat maakt een harness nuttig?
+
+Meer autonomie is alleen nuttig als het systeem zijn werk kan controleren en problemen kan opvangen. Kijk bij een lange taak hoe de harness met deze punten omgaat:
+
+- **Context:** Houd relevante instructies en bewijs beschikbaar. Oude stappen samenvatten kan ruimte besparen, maar ook details verliezen.
+- **Voortgang:** Sla beslissingen en onafgemaakt werk op zodat de volgende sessie verder kan gaan. De opgeslagen toestand moet nog steeds in de context worden geladen.
+- **Fouten:** Geef fouten duidelijk terug, beperk het aantal nieuwe pogingen en herhaal acties met neveneffecten niet blind.
+- **Limieten:** Stop bij een limiet voor tijd, kosten of stappen, of wanneer het werk invoer van de gebruiker nodig heeft. Stoppen bewijst niet dat het werk is geslaagd.
+- **Verificatie:** Bekijk echte bestanden, testresultaten of andere uitkomsten. Een zelfverzekerd eindbericht is niet genoeg.
+
+Probeer bij het vergelijken van opstellingen dezelfde echte taken en bekijk zowel de uitkomsten als de uitvoeringslogboeken. Houd het model gelijk als je een wijziging in de harness wilt onderzoeken. Verander één prompt, skill of toolinstelling tegelijk en herhaal taken, want afzonderlijke uitvoeringen verschillen.
+
+<InteractiveChecklist
+  title="Probeer dit bij een taak die je al doet"
+  items={[
+    { id: "outcome", label: "Schrijf de gewenste uitkomst op en hoe je die gaat controleren" },
+    { id: "tools", label: "Kies de tools en toegang die de taak nodig heeft" },
+    { id: "skill", label: "Verplaats één terugkerende procedure naar een kleine skill" },
+    { id: "limits", label: "Bepaal wat er gebeurt als een tool faalt of een limiet is bereikt" },
+    { id: "evidence", label: "Voer de taak uit en vergelijk het rapport met het echte bewijs" }
+  ]}
+/>

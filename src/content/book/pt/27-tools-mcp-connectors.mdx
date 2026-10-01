@@ -1,0 +1,209 @@
+Você pede a um agente para encontrar os bugs abertos no seu projeto e preparar um rascunho de uma issue de acompanhamento. Para isso, ele precisa de mais do que boas instruções. Precisa de um jeito de acessar seu gerenciador de issues, ler os dados certos e talvez criar algo ali.
+
+É aqui que entram **ferramentas**, **conectores** e **MCP**. Eles têm relação entre si, mas descrevem partes diferentes da configuração.
+
+## Ferramentas, APIs, conectores e MCP
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Termo</th>
+      <th scope="col">O que significa</th>
+      <th scope="col">Exemplo com um gerenciador de issues</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Ferramenta</td>
+      <td>Uma operação específica disponível para o agente</td>
+      <td>Pesquisar issues ou criar uma issue</td>
+    </tr>
+    <tr>
+      <td>API</td>
+      <td>Uma interface que um software pode usar para se comunicar com outro sistema</td>
+      <td>Os endpoints do gerenciador para ler e escrever issues</td>
+    </tr>
+    <tr>
+      <td>Conector</td>
+      <td>Uma integração que conecta a aplicação de IA a um serviço ou fonte de dados</td>
+      <td>A integração do gerenciador, com sua conexão à conta e suas ações disponíveis</td>
+    </tr>
+    <tr>
+      <td>MCP</td>
+      <td>Um protocolo para trocar contexto e disponibilizar capacidades às aplicações de IA</td>
+      <td>Uma forma comum de descobrir as ferramentas do gerenciador e chamá-las</td>
+    </tr>
+  </tbody>
+</table>
+
+Uma ferramenta também pode funcionar localmente. Uma calculadora não precisa de conexão com uma conta. Uma ferramenta de leitura de arquivos pode funcionar inteiramente no seu computador. Um serviço externo é apenas uma possível fonte de ferramentas.
+
+## O que uma ferramenta realmente contém
+
+Uma ferramenta geralmente tem um **nome**, uma **descrição**, um **esquema de entrada** e uma implementação que faz o trabalho. A descrição ajuda o modelo a decidir quando usá-la. O esquema descreve os argumentos que ela aceita.
+
+Aqui está uma pequena definição fictícia de ferramenta MCP:
+
+<Collapsible title="Examine a definição de search_issues">
+
+```json
+{
+  "name": "search_issues",
+  "description": "Pesquise issues no projeto conectado. Esta ferramenta apenas lê dados.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string" },
+      "limit": { "type": "integer", "minimum": 1, "maximum": 20 }
+    },
+    "required": ["query"],
+    "additionalProperties": false
+  }
+}
+```
+
+</Collapsible>
+
+O modelo pode solicitar `search_issues` com `{"query": "bugs abertos", "limit": 3}`. A aplicação encaminha essa solicitação para a implementação. Ela consulta o gerenciador e devolve resultados ou um erro.
+
+O nome e o esquema não executam nada sozinhos. A implementação precisa validar as entradas, verificar o acesso e realizar a operação. A resposta da ferramenta também é diferente da resposta final do modelo: ela pode conter IDs e títulos de issues, que o modelo resume depois. A [especificação de ferramentas MCP](https://modelcontextprotocol.io/specification/latest/server/tools) descreve como as ferramentas disponibilizam essas operações.
+
+<Callout type="info" title="Uma solicitação não é um resultado">
+“Vou criar uma issue” é uma afirmação. Uma chamada de ferramenta solicita a operação. Uma resposta bem-sucedida com o ID da nova issue é uma evidência de que ela aconteceu. Mantenha essas três coisas separadas.
+</Callout>
+
+## O que um conector acrescenta
+
+Um conector reúne a integração com um sistema específico. Ele pode cuidar do login, da seleção de uma conta ou espaço de trabalho, da busca de dados e da disponibilização das ações suportadas como ferramentas. Alguns conectores apenas pesquisam ou leem. Outros também permitem gravar dados.
+
+**Conector é um termo de produto, não um padrão técnico universal.** Um conector pode chamar diretamente a API de um serviço. Outro pode usar um servidor MCP. Um terceiro pode pesquisar em um índice criado a partir de documentos sincronizados. Confira o que a integração específica suporta. A [visão geral de conectores da Microsoft](https://learn.microsoft.com/en-us/azure/connectors/introduction) mostra um exemplo de integrações baseadas em APIs.
+
+Conectar uma conta não significa que o agente vê todos os arquivos, carrega todos os seus dados no contexto ou tem permissão para realizar qualquer ação. O acesso depende da conta, dos escopos configurados, da aplicação e das permissões do próprio serviço. Os resultados de busca também podem refletir um índice mais antigo que os documentos originais.
+
+Para o gerenciador de issues, separe estas perguntas: existe uma conexão configurada? A qual projeto ela pode acessar? Ela só pode ler ou também pode criar issues?
+
+## O que o MCP padroniza
+
+**MCP** significa **Model Context Protocol**. Ele define uma forma comum de comunicação entre aplicações de IA e provedores externos de capacidades. Não substitui a API de um serviço; um servidor MCP pode usar essa API internamente.
+
+A [arquitetura do MCP](https://modelcontextprotocol.io/docs/learn/architecture) tem três papéis principais:
+
+<InfoGrid columns={3} items={[
+  { label: "Host", description: "A aplicação de IA em que o usuário trabalha. Ela coordena conexões, interações com o modelo e permissões.", color: "blue" },
+  { label: "Cliente", description: "A parte dentro do host que mantém uma conexão com um servidor MCP.", color: "green" },
+  { label: "Servidor", description: "Um programa que disponibiliza ferramentas, recursos ou prompts por MCP. Pode funcionar localmente ou de forma remota.", color: "amber" }
+]} />
+
+Para uma chamada de ferramenta, o cliente pode descobrir as ferramentas do servidor com `tools/list`. A aplicação disponibiliza ao modelo as definições das ferramentas relevantes. Se o modelo solicitar uma delas, a aplicação pode enviar uma solicitação `tools/call` pelo seu cliente MCP. O servidor executa ou delega a operação e devolve o resultado.
+
+O modelo não precisa abrir uma conexão de rede sozinho. A aplicação e a implementação MCP cuidam da comunicação. A compatibilidade continua importante: o host e o servidor precisam suportar as capacidades que você quer usar. Descobrir uma ferramenta não garante permissão para executá-la; as verificações de acesso continuam valendo.
+
+### O MCP oferece mais do que ferramentas
+
+O MCP também define **recursos** e **prompts**. Essas palavras têm significados específicos no protocolo:
+
+<InfoGrid columns={3} items={[
+  { label: "Ferramentas", description: "Operações que o modelo pode solicitar, sujeitas aos controles da aplicação. Exemplo: pesquisar issues.", color: "blue" },
+  { label: "Recursos", description: "Dados que a aplicação pode disponibilizar como contexto. Exemplo: um guia do projeto identificado por uma URI.", color: "green" },
+  { label: "Prompts", description: "Modelos de mensagens reutilizáveis que os usuários podem selecionar, com argumentos opcionais. Exemplo: preparar um relatório de triagem de issues.", color: "amber" }
+]} />
+
+O [guia de conceitos do servidor MCP](https://modelcontextprotocol.io/docs/learn/server-concepts) descreve esses elementos como ferramentas controladas pelo modelo, recursos controlados pela aplicação e prompts controlados pelo usuário. Esses termos descrevem os padrões de interação previstos. Eles não removem as verificações de permissão da aplicação.
+
+Um modelo de prompt MCP não é automaticamente uma skill. Uma skill pode reunir um procedimento mais longo, referências e scripts. Ela pode orientar o agente a usar ferramentas fornecidas por MCP, um conector direto ou funções locais.
+
+## Experimente uma leitura e uma escrita
+
+Este exemplo usa o mesmo gerenciador fictício por dois caminhos. Mude o caminho, a operação ou o nível de acesso e depois execute a solicitação. Para uma escrita, experimente aprovar e recusar.
+
+<ToolsDemo copy={{
+  title: "Acompanhe uma solicitação de ferramenta",
+  description: "Uma simulação com um gerenciador fictício. Nenhuma conta é conectada e nenhuma issue real é lida ou criada. Os modos conectados usam a mesma conta de exemplo.",
+  routeLabel: "Caminho da integração",
+  directLabel: "API direta",
+  mcpLabel: "MCP",
+  toolLabel: "Operação",
+  readLabel: "Pesquisar issues",
+  writeLabel: "Criar uma issue",
+  accessLabel: "Acesso da conexão",
+  disconnectedLabel: "Desconectado",
+  readOnlyLabel: "Conectado: somente leitura",
+  readWriteLabel: "Conectado: leitura e escrita",
+  appLabel: "Aplicação de IA",
+  hostLabel: "Aplicação de IA + cliente MCP",
+  connectorLabel: "Conector de API direta",
+  serverLabel: "Servidor MCP do gerenciador de issues",
+  serviceLabel: "Serviço de gerenciamento de issues",
+  requestLabel: "Solicitação de ferramenta",
+  resultLabel: "Resultado",
+  run: "Executar a solicitação",
+  reset: "Reiniciar",
+  approve: "Aprovar criação",
+  decline: "Recusar",
+  query: "bugs abertos",
+  issueTitle: "Adicionar um estado vazio útil à busca",
+  policyNote: "O caminho muda como a solicitação é enviada, não o acesso que ela tem. Esta aplicação de exemplo exige aprovação antes de criar uma issue; isso é uma política da aplicação, não uma regra universal do MCP. Mudar uma configuração reinicia o resultado.",
+  states: {
+    ready: "Escolha uma configuração e execute a solicitação. Nenhuma operação foi executada ainda.",
+    disconnected: "Nenhuma conexão está configurada. A aplicação não consegue acessar as issues deste projeto. Escolher MCP não conecta uma conta nem concede acesso.",
+    denied: "Esta conexão só pode ler. A criação de uma issue é bloqueada antes da execução. Aprovar esta solicitação específica não acrescentaria permissão de escrita.",
+    read: "A busca simulada retorna BUG-42: a página de busca fica em branco quando não há resultados. A aplicação agora pode fornecer essa evidência ao modelo. Nenhuma issue foi alterada.",
+    approval: "O acesso de escrita está disponível, mas esta aplicação exige sua aprovação para esta ação. Confira o título na solicitação. Nada foi criado ainda.",
+    created: "O serviço simulado confirma a criação de FOLLOWUP-108 com o título solicitado. O modelo pode informar esse ID como evidência do resultado.",
+    declined: "A criação foi recusada. A aplicação não enviou a operação de escrita ao serviço e nenhuma nova issue foi criada."
+  }
+}} />
+
+Os modos de leitura e escrita aqui pertencem à nossa integração de exemplo. As permissões reais podem ser mais específicas. O MCP dá às duas partes um protocolo comum. Ele não decide se sua conta pode escrever no projeto ou se a aplicação deve perguntar antes. A **autenticação** estabelece a identidade; a **autorização** determina o acesso permitido. Uma aprovação separada pode confirmar uma ação específica. Integrações HTTP remotas podem usar o [framework de autorização do MCP](https://modelcontextprotocol.io/specification/latest/basic/authorization); os detalhes dependem da integração.
+
+<Quiz
+  question="Uma integração MCP conectada tem acesso somente de leitura. O agente pode criar uma issue usando um prompt mais explícito?"
+  options={[
+    "Sim, porque o MCP permite toda operação que o modelo solicita",
+    "Sim, se o usuário aprovar aquela solicitação específica",
+    "Não. A integração precisa de acesso de escrita autorizado antes de poder escrever",
+    "Sim, se uma skill incluir o nome da ferramenta create_issue"
+  ]}
+  correctIndex={2}
+  explanation="Um prompt, uma skill ou a aprovação de uma ação não ampliam o acesso da conexão. A aplicação e o serviço precisam autorizar a escrita."
+/>
+
+## Dando instruções a um agente com ferramentas
+
+Diga ao agente quais informações procurar, como usá-las e quais ações você espera. Evite presumir que existe uma conexão ou que uma ferramenta suporta todas as operações do serviço.
+
+<Compare
+  before={{ label: "Coisas demais para adivinhar", content: "Confira os bugs e resolva tudo." }}
+  after={{ label: "Resultado e limites claros", content: "Pesquise no projeto conectado os bugs abertos sobre buscas sem resultados. Resuma as issues relevantes e inclua seus IDs. Prepare um rascunho de uma issue de acompanhamento se necessário, mas pergunte antes de criá-la. Se a conexão ou a ferramenta necessária estiver indisponível, explique o que falta. Não afirme que uma issue foi criada sem um resultado bem-sucedido da ferramenta." }}
+/>
+
+Uma skill reutilizável de triagem poderia acrescentar o método: buscar duplicatas, comparar os passos para reproduzir o problema, seguir o modelo de issue do projeto e relatar perguntas não resolvidas. A ferramenta fornece a operação. A skill explica como usá-la bem.
+
+A saída da ferramenta ainda precisa ser avaliada. Um comentário de issue, um documento ou um resultado de busca pode conter erros ou texto que parece uma instrução. Trate o conteúdo recuperado como dados, sem permitir que ele altere a solicitação do usuário ou as regras da aplicação. O suporte a MCP, sozinho, não torna um servidor ou seu conteúdo confiável.
+
+Se uma leitura falhar, o agente pode informar o erro ou tentar uma alternativa razoável. Se uma escrita exceder o tempo de espera, ele deve verificar se a alteração aconteceu antes de repeti-la. Caso contrário, uma nova tentativa pode criar uma issue duplicada. As credenciais devem ficar na configuração de conexão da integração, não no prompt da tarefa.
+
+<Quiz
+  question="Como um conector, o MCP e uma ferramenta podem trabalhar juntos?"
+  options={[
+    "São três nomes para a mesma coisa",
+    "Um conector pode usar MCP para disponibilizar uma operação de um serviço como ferramenta",
+    "O MCP substitui o serviço e armazena todos os seus dados dentro do modelo",
+    "Uma skill precisa criar a conexão de rede para cada chamada de ferramenta"
+  ]}
+  correctIndex={1}
+  explanation="O conector é a integração, o MCP pode ser seu protocolo de comunicação e uma ferramenta é uma operação específica. Uma integração direta com API também pode fornecer ferramentas sem MCP."
+/>
+
+<InteractiveChecklist
+  title="Antes de usar uma nova integração"
+  items={[
+    { id: "source", label: "Identifique o serviço, projeto ou arquivos de que a tarefa precisa" },
+    { id: "capabilities", label: "Confira quais ferramentas e operações a integração realmente disponibiliza" },
+    { id: "access", label: "Confira a identidade conectada e seu acesso de leitura ou escrita" },
+    { id: "approval", label: "Decida quais ações devem esperar uma aprovação" },
+    { id: "evidence", label: "Confira as evidências recebidas antes de informar sucesso" }
+  ]}
+/>
+
+O próximo capítulo, [Os harnesses](/book/26-the-harnesses), examina o software que coordena essas conexões, instruções e resultados de ferramentas ao longo de uma tarefa inteira.

@@ -88,6 +88,8 @@ const STATICALLY_RENDERED_COMPONENTS = [
   'FrameworkDemo', 'CRISPEFramework', 'BREAKFramework', 'RTFFramework',
   'PromptBreakdown', 'SpecificitySpectrum', 'PrinciplesSummary',
   'PromptBuilder', 'BookPartsNav',
+  'HarnessDemo',
+  'ToolsDemo',
   'Collapsible', 'CopyableCode',
 ];
 
@@ -314,6 +316,15 @@ function extractProps(content: string): Record<string, string> {
     props[m[1]] = m[2];
   }
   return props;
+}
+
+/** Read plain string fields without evaluating a component's MDX expression. */
+function extractObjectStringFields(source: string): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const field of source.matchAll(/\b(\w+):\s*("(?:[^"\\]|\\.)*")/g)) {
+    values[field[1]] = JSON.parse(field[2]) as string;
+  }
+  return values;
 }
 
 /**
@@ -1566,6 +1577,69 @@ expertise:
   <div class="demo-header">${icon('pencil', '✏️')} ${escapeHtml(title)}</div>
   <p class="demo-note">Fill in the fields below to construct your prompt. Not all fields are required — use what fits your task.</p>
   ${fieldsHtml}
+</div>
+`;
+  });
+
+  // ============================================================
+  // HarnessDemo - default trace plus the unavailable-tools outcome
+  // ============================================================
+  result = result.replace(/<HarnessDemo\s+copy=\{\{([\s\S]*?)\}\}\s*\/>/g, (_match, copy: string) => {
+    const header = extractObjectStringFields(copy.split('controls:')[0]);
+    const stepsSource = copy.split('steps:')[1] || '';
+    const step = (key: string) => extractObjectStringFields(stepsSource.match(new RegExp(`${key}:\\s*\\{([^{}]*)\\}`))?.[1] || '');
+    const trace = [
+      { data: step('context'), keys: ['clearPrompt', 'skillLoaded'] },
+      { data: step('request'), keys: ['guided'] },
+      { data: step('permission'), keys: ['allowed'] },
+      { data: step('observation'), keys: ['guided'] },
+      { data: step('review'), keys: ['checked'] },
+      { data: step('finish'), keys: ['verified'] },
+    ];
+    const traceHtml = trace.map(({ data, keys }) => `<li><strong>${escapeHtml(data.title || '')}</strong>${keys.map(key => `<p>${escapeHtml(data[key] || '')}</p>`).join('')}</li>`).join('\n');
+    return `
+<div class="demo-box">
+  <div class="demo-header">${escapeHtml(header.title || '')}</div>
+  <p class="demo-note">${escapeHtml(header.description || '')}</p>
+  <p><strong>${escapeHtml(header.taskLabel || '')}:</strong> ${escapeHtml(header.task || '')}</p>
+  <p>${escapeHtml(header.resetHint || '')}</p>
+  <ol>${traceHtml}</ol>
+  <p><strong>${escapeHtml(header.unverified || '')}:</strong> ${escapeHtml(step('permission').blocked || '')} ${escapeHtml(step('finish').unverified || '')}</p>
+  <p class="interactive-notice">${notice}</p>
+</div>
+`;
+  });
+
+  // ============================================================
+  // ToolsDemo - both routes and the read/write permission outcomes
+  // ============================================================
+  result = result.replace(/<ToolsDemo\s+copy=\{\{([\s\S]*?)\}\}\s*\/>/g, (_match, copy: string) => {
+    const data = extractObjectStringFields(copy.split('states:')[0]);
+    const states = extractObjectStringFields(copy.split('states:')[1] || '');
+    const route = (keys: string[]) => keys.map(key => escapeHtml(data[key] || '')).join(' → ');
+    const readRequest = protectCodeBlock(escapeHtml(`search_issues(${JSON.stringify({ query: data.query })})`));
+    const writeRequest = protectCodeBlock(escapeHtml(`create_issue(${JSON.stringify({ title: data.issueTitle })})`));
+    const outcomes = [
+      { state: 'disconnected', label: 'disconnectedLabel' },
+      { state: 'denied', label: 'readOnlyLabel' },
+      { state: 'approval', label: 'readWriteLabel' },
+      { state: 'created', label: 'approve' },
+      { state: 'declined', label: 'decline' },
+    ];
+    return `
+<div class="demo-box">
+  <div class="demo-header">${escapeHtml(data.title || '')}</div>
+  <p class="demo-note">${escapeHtml(data.description || '')}</p>
+  <p><strong>${escapeHtml(data.directLabel || '')}:</strong> ${route(['appLabel', 'connectorLabel', 'serviceLabel'])}</p>
+  <p><strong>${escapeHtml(data.mcpLabel || '')}:</strong> ${route(['hostLabel', 'serverLabel', 'serviceLabel'])}</p>
+  <p><strong>${escapeHtml(data.requestLabel || '')}:</strong> ${escapeHtml(data.readLabel || '')}</p>
+  <pre class="prompt-code">${readRequest}</pre>
+  <p>${escapeHtml(states.read || '')}</p>
+  <p><strong>${escapeHtml(data.requestLabel || '')}:</strong> ${escapeHtml(data.writeLabel || '')}</p>
+  <pre class="prompt-code">${writeRequest}</pre>
+  <ul>${outcomes.map(({ state, label }) => `<li><strong>${escapeHtml(data[label] || '')}:</strong> ${escapeHtml(states[state] || '')}</li>`).join('')}</ul>
+  <p>${escapeHtml(data.policyNote || '')}</p>
+  <p class="interactive-notice">${notice}</p>
 </div>
 `;
   });

@@ -1,0 +1,209 @@
+You ask an agent to find the open bugs in your project and draft a follow-up issue. To do that, it needs more than good instructions. It needs a way to reach your issue tracker, read the right data, and possibly create something there.
+
+This is where **tools**, **connectors**, and **MCP** come in. They are related, but they describe different parts of the setup.
+
+## Tools, APIs, Connectors, and MCP
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Term</th>
+      <th scope="col">What it means</th>
+      <th scope="col">Issue tracker example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Tool</td>
+      <td>A specific operation available to the agent</td>
+      <td>Search issues or create an issue</td>
+    </tr>
+    <tr>
+      <td>API</td>
+      <td>An interface software can use to communicate with another system</td>
+      <td>The tracker's endpoints for reading and writing issues</td>
+    </tr>
+    <tr>
+      <td>Connector</td>
+      <td>An integration that connects the AI application to a service or data source</td>
+      <td>The issue tracker integration, with its account connection and supported actions</td>
+    </tr>
+    <tr>
+      <td>MCP</td>
+      <td>A protocol for exchanging context and exposing capabilities to AI applications</td>
+      <td>A shared way to discover the tracker's tools and call them</td>
+    </tr>
+  </tbody>
+</table>
+
+A tool can also work locally. A calculator does not need an account connection. A file-reading tool may work entirely on your computer. An external service is only one possible source of tools.
+
+## What a Tool Actually Contains
+
+A tool usually has a **name**, a **description**, an **input schema**, and an implementation that does the work. The description helps the model decide when to use it. The schema describes the arguments it accepts.
+
+Here is a small fictional MCP tool definition:
+
+<Collapsible title="Inspect the search_issues definition">
+
+```json
+{
+  "name": "search_issues",
+  "description": "Search issues in the connected project. This tool only reads data.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string" },
+      "limit": { "type": "integer", "minimum": 1, "maximum": 20 }
+    },
+    "required": ["query"],
+    "additionalProperties": false
+  }
+}
+```
+
+</Collapsible>
+
+The model might request `search_issues` with `{"query": "open bugs", "limit": 3}`. The surrounding application routes that request to the implementation. The implementation queries the tracker and returns results or an error.
+
+The name and schema do not execute anything by themselves. The implementation must validate inputs, check access, and do the actual operation. A tool response is also separate from the model's final answer: the response might contain issue IDs and titles, which the model then summarizes. The [MCP tools specification](https://modelcontextprotocol.io/specification/latest/server/tools) describes how tools expose these operations.
+
+<Callout type="info" title="A request is not a result">
+"I will create an issue" is a statement. A tool call requests the operation. A successful response with the new issue's ID is evidence that it happened. Keep those three things separate.
+</Callout>
+
+## What a Connector Adds
+
+A connector packages the integration with a particular system. It may handle signing in, selecting an account or workspace, finding data, and exposing supported actions as tools. Some connectors only search or read. Others also support writes.
+
+**Connector is a product term, not one universal technical standard.** One connector might call a service's API directly. Another might use an MCP server. A third might search an index built from synced documents. Check what the specific integration supports. Microsoft's [connector overview](https://learn.microsoft.com/en-us/azure/connectors/introduction) gives one example of integrations built around APIs.
+
+Connecting an account does not mean the agent sees every file, loads all of your data into its context, or has permission to perform every action. Access depends on the account, configured scopes, the application, and the service's own permissions. Search results may also reflect an index that is older than the original documents.
+
+For the issue tracker, keep these questions separate: Is a connection configured? Which project can it access? Can it only read, or can it create issues too?
+
+## What MCP Standardizes
+
+**MCP** stands for **Model Context Protocol**. It defines a shared way for AI applications and external capability providers to communicate. It does not replace a service's API; an MCP server can use that API behind the scenes.
+
+The [MCP architecture](https://modelcontextprotocol.io/docs/learn/architecture) has three main roles:
+
+<InfoGrid columns={3} items={[
+  { label: "Host", description: "The AI application the user works in. It coordinates connections, model interactions, and permissions.", color: "blue" },
+  { label: "Client", description: "The part inside the host that maintains a connection to an MCP server.", color: "green" },
+  { label: "Server", description: "A program that exposes tools, resources, or prompts through MCP. It can run locally or remotely.", color: "amber" }
+]} />
+
+For a tool call, the client can discover the server's tools with `tools/list`. The application makes relevant tool definitions available to the model. If the model requests one, the application can send a `tools/call` request through its MCP client. The server executes or delegates the operation and returns the result.
+
+The model does not need to open a network connection itself. The application and the MCP implementation handle the communication. Compatibility still matters: the host and server must support the capabilities you want to use. Discovering a tool does not guarantee permission to run it; access checks still apply.
+
+### MCP Offers More Than Tools
+
+MCP also defines **resources** and **prompts**. These words have specific meanings in the protocol:
+
+<InfoGrid columns={3} items={[
+  { label: "Tools", description: "Operations the model can request, subject to application controls. Example: search issues.", color: "blue" },
+  { label: "Resources", description: "Data the application can make available as context. Example: a project guide identified by a URI.", color: "green" },
+  { label: "Prompts", description: "Reusable message templates users can select, with optional arguments. Example: prepare an issue triage report.", color: "amber" }
+]} />
+
+The [MCP server concepts guide](https://modelcontextprotocol.io/docs/learn/server-concepts) describes these as model-controlled tools, application-controlled resources, and user-controlled prompts. These describe the intended interaction patterns. They do not remove the application's permission checks.
+
+An MCP prompt template is not automatically a skill. A skill can package a longer procedure, references, and scripts. It may tell the agent how to use tools provided through MCP, a direct connector, or local functions.
+
+## Try a Read and a Write
+
+This example uses the same fictional tracker through two routes. Change the route, operation, or access level, then run the request. For a write, try both approving and declining it.
+
+<ToolsDemo copy={{
+  title: "Follow a tool request",
+  description: "A scripted simulation with a fictional tracker. No accounts are connected and no real issues are read or created. Connected modes use the same example account.",
+  routeLabel: "Integration route",
+  directLabel: "Direct API",
+  mcpLabel: "MCP",
+  toolLabel: "Operation",
+  readLabel: "Search issues",
+  writeLabel: "Create an issue",
+  accessLabel: "Connection access",
+  disconnectedLabel: "Disconnected",
+  readOnlyLabel: "Connected: read only",
+  readWriteLabel: "Connected: read and write",
+  appLabel: "AI application",
+  hostLabel: "AI app + MCP client",
+  connectorLabel: "Direct API connector",
+  serverLabel: "Issue tracker MCP server",
+  serviceLabel: "Issue tracker service",
+  requestLabel: "Tool request",
+  resultLabel: "Result",
+  run: "Run the request",
+  reset: "Reset",
+  approve: "Approve creation",
+  decline: "Decline",
+  query: "open bugs",
+  issueTitle: "Add a helpful empty search state",
+  policyNote: "The route changes how the request travels, not what access it has. This example app requires approval before creating an issue; that is an app policy, not a universal MCP rule. Changing a setting resets the result.",
+  states: {
+    ready: "Choose a setup and run the request. No operation has run yet.",
+    disconnected: "No connection is configured. The app cannot reach this project's issues. Choosing MCP does not connect an account or grant access.",
+    denied: "This connection can only read. Creating an issue is blocked before execution. Approval of this individual request would not add write permission.",
+    read: "The simulated search returns BUG-42: the search page is blank when no results match. The app can now give this evidence to the model. No issue was changed.",
+    approval: "Write access is available, but this app requires your approval for this action. Review the title in the request. Nothing has been created yet.",
+    created: "The simulated service confirms creation of FOLLOWUP-108 with the requested title. The model can report that ID as evidence of the result.",
+    declined: "Creation was declined. The app did not send the write operation to the service, and no new issue was created."
+  }
+}} />
+
+The read and write modes here belong to our example integration. Real permissions can be more specific. MCP gives the two sides a common protocol. It does not decide whether your account can write to the project or whether the app should ask you first. **Authentication** establishes identity; **authorization** determines allowed access. A separate approval can confirm a particular action. Remote HTTP integrations can use the [MCP authorization framework](https://modelcontextprotocol.io/specification/latest/basic/authorization); the details depend on the integration.
+
+<Quiz
+  question="A connected MCP integration has read-only access. Can the agent create an issue by using a more explicit prompt?"
+  options={[
+    "Yes, because MCP allows every operation the model requests",
+    "Yes, if the user approves that one request",
+    "No. The integration needs authorized write access before it can perform the write",
+    "Yes, if a skill includes the create_issue tool name"
+  ]}
+  correctIndex={2}
+  explanation="A prompt, skill, or action approval does not expand the connection's access. The application and service must authorize the write."
+/>
+
+## Prompting an Agent That Has Tools
+
+Tell the agent what information to look for, how to use it, and which actions you expect. Avoid assuming that a connection exists or that a tool supports every operation in the service.
+
+<Compare
+  before={{ label: "Too much left to guess", content: "Check the bugs and sort everything out." }}
+  after={{ label: "Clear outcome and boundaries", content: "Search the connected project for open bugs about empty search results. Summarize the relevant issues and include their IDs. Draft a follow-up issue if needed, but ask before creating it. If the connection or required tool is unavailable, explain what is missing. Do not claim an issue was created without a successful tool result." }}
+/>
+
+A reusable triage skill could add the method: check for duplicates, compare reproduction steps, follow the project's issue template, and report unresolved questions. The tool provides the operation. The skill explains how to use it well.
+
+Tool output still needs judgment. An issue comment, a document, or a search result can contain mistakes or text that looks like an instruction. Treat retrieved content as data, rather than allowing it to change the user's request or the application's rules. MCP support alone does not make a server or its contents trustworthy.
+
+If a read fails, the agent can report the error or try a reasonable alternative. If a write times out, it should check whether the change happened before repeating it. Otherwise, a retry might create a duplicate issue. Credentials belong in the integration's connection setup, not in the task prompt.
+
+<Quiz
+  question="How can a connector, MCP, and a tool work together?"
+  options={[
+    "They are three names for the same thing",
+    "A connector can use MCP to expose a service operation as a tool",
+    "MCP replaces the service and stores all its data inside the model",
+    "A skill must create the network connection for every tool call"
+  ]}
+  correctIndex={1}
+  explanation="A connector is the integration, MCP can be its communication protocol, and a tool is a specific operation. A direct API integration can also provide tools without MCP."
+/>
+
+<InteractiveChecklist
+  title="Before using a new integration"
+  items={[
+    { id: "source", label: "Identify the service, project, or files the task needs" },
+    { id: "capabilities", label: "Check which tools and operations the integration actually exposes" },
+    { id: "access", label: "Check the connected identity and its read or write access" },
+    { id: "approval", label: "Decide which actions should wait for approval" },
+    { id: "evidence", label: "Check the returned evidence before reporting success" }
+  ]}
+/>
+
+The next chapter, [The Harnesses](/book/26-the-harnesses), looks at the software that coordinates these connections, instructions, and tool results across a whole task.

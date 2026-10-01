@@ -60,6 +60,8 @@ export const parts: Part[] = [
       { slug: "14-context-engineering", title: "Context Engineering", part: "Advanced", partNumber: 3, chapterNumber: 14, description: "RAG, embeddings, function calling, and MCP" },
       { slug: "14a-loop-engineering", title: "The Loop Engineering", part: "Advanced", partNumber: 3, chapterNumber: 26, description: "Designing feedback cycles that act, verify, adapt, and know when to stop" },
       { slug: "25-agents-and-skills", title: "Agents & Skills", part: "Advanced", partNumber: 3, chapterNumber: 25, description: "Building AI agents with reusable skill packages" },
+      { slug: "27-tools-mcp-connectors", title: "Tools, MCP and Connectors", part: "Advanced", partNumber: 3, chapterNumber: 27, description: "How tools, MCP, and connectors give AI access to data and actions" },
+      { slug: "26-the-harnesses", title: "The Harnesses", part: "Advanced", partNumber: 3, chapterNumber: 28, description: "How harnesses connect models, prompts, skills, and tools" },
     ],
   },
   {

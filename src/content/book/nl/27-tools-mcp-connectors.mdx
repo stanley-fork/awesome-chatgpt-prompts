@@ -1,0 +1,209 @@
+Je vraagt een agent om de openstaande bugs in je project te vinden en een vervolgissue op te stellen. Daarvoor zijn goede instructies alleen niet genoeg. De agent moet je issuetracker kunnen bereiken, de juiste gegevens kunnen lezen en er misschien iets kunnen aanmaken.
+
+Hier komen **tools**, **connectors** en **MCP** in beeld. Ze hangen samen, maar beschrijven verschillende delen van de opstelling.
+
+## Tools, API's, connectors en MCP
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Term</th>
+      <th scope="col">Betekenis</th>
+      <th scope="col">Voorbeeld met een issuetracker</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Tool</td>
+      <td>Een specifieke bewerking die de agent kan gebruiken</td>
+      <td>Issues zoeken of een issue aanmaken</td>
+    </tr>
+    <tr>
+      <td>API</td>
+      <td>Een interface waarmee software met een ander systeem kan communiceren</td>
+      <td>De endpoints van de tracker voor het lezen en schrijven van issues</td>
+    </tr>
+    <tr>
+      <td>Connector</td>
+      <td>Een integratie die de AI-toepassing met een dienst of gegevensbron verbindt</td>
+      <td>De integratie met de issuetracker, inclusief de accountverbinding en ondersteunde acties</td>
+    </tr>
+    <tr>
+      <td>MCP</td>
+      <td>Een protocol om context uit te wisselen en mogelijkheden aan AI-toepassingen aan te bieden</td>
+      <td>Een gemeenschappelijke manier om de tools van de tracker te ontdekken en aan te roepen</td>
+    </tr>
+  </tbody>
+</table>
+
+Een tool kan ook lokaal werken. Een rekenmachine heeft geen accountverbinding nodig. Een tool om bestanden te lezen kan volledig op je computer werken. Een externe dienst is maar één mogelijke bron van tools.
+
+## Wat een tool eigenlijk bevat
+
+Een tool heeft meestal een **naam**, een **beschrijving**, een **invoerschema** en een implementatie die het werk uitvoert. De beschrijving helpt het model te bepalen wanneer het de tool moet gebruiken. Het schema beschrijft de argumenten die de tool accepteert.
+
+Hier is een kleine definitie van een fictieve MCP-tool:
+
+<Collapsible title="Bekijk de definitie van search_issues">
+
+```json
+{
+  "name": "search_issues",
+  "description": "Zoek issues in het verbonden project. Deze tool leest alleen gegevens.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string" },
+      "limit": { "type": "integer", "minimum": 1, "maximum": 20 }
+    },
+    "required": ["query"],
+    "additionalProperties": false
+  }
+}
+```
+
+</Collapsible>
+
+Het model kan `search_issues` aanvragen met `{"query": "openstaande bugs", "limit": 3}`. De toepassing stuurt dat verzoek naar de implementatie. Die bevraagt de tracker en geeft resultaten of een fout terug.
+
+De naam en het schema voeren zelf niets uit. De implementatie moet de invoer valideren, de toegang controleren en de bewerking uitvoeren. Het antwoord van een tool staat ook los van het uiteindelijke antwoord van het model: het kan issue-ID's en titels bevatten die het model daarna samenvat. De [MCP-specificatie voor tools](https://modelcontextprotocol.io/specification/latest/server/tools) beschrijft hoe tools deze bewerkingen aanbieden.
+
+<Callout type="info" title="Een verzoek is geen resultaat">
+'Ik zal een issue aanmaken' is een uitspraak. Een toolaanroep vraagt de bewerking aan. Een geslaagd antwoord met het ID van het nieuwe issue bewijst dat het is gebeurd. Houd die drie dingen uit elkaar.
+</Callout>
+
+## Wat een connector toevoegt
+
+Een connector bundelt de integratie met een bepaald systeem. Die kan het aanmelden, de keuze van een account of werkruimte, het zoeken van gegevens en het aanbieden van ondersteunde acties als tools regelen. Sommige connectors kunnen alleen zoeken of lezen. Andere ondersteunen ook schrijven.
+
+**Connector is een productterm, geen universele technische standaard.** De ene connector roept rechtstreeks de API van een dienst aan. Een andere gebruikt een MCP-server. Een derde doorzoekt een index die is opgebouwd uit gesynchroniseerde documenten. Controleer wat de specifieke integratie ondersteunt. Microsofts [overzicht van connectors](https://learn.microsoft.com/en-us/azure/connectors/introduction) geeft een voorbeeld van integraties rond API's.
+
+Een account verbinden betekent niet dat de agent elk bestand ziet, al je gegevens in zijn context laadt of elke actie mag uitvoeren. Toegang hangt af van het account, de ingestelde scopes, de toepassing en de machtigingen van de dienst zelf. Zoekresultaten kunnen ook afkomstig zijn uit een index die ouder is dan de oorspronkelijke documenten.
+
+Houd bij de issuetracker deze vragen gescheiden: is er een verbinding ingesteld? Welk project is toegankelijk? Kan de verbinding alleen lezen, of ook issues aanmaken?
+
+## Wat MCP standaardiseert
+
+**MCP** staat voor **Model Context Protocol**. Het definieert een gemeenschappelijke manier waarop AI-toepassingen en externe aanbieders van mogelijkheden communiceren. Het vervangt de API van een dienst niet; een MCP-server kan die API op de achtergrond gebruiken.
+
+De [MCP-architectuur](https://modelcontextprotocol.io/docs/learn/architecture) heeft drie hoofdrollen:
+
+<InfoGrid columns={3} items={[
+  { label: "Host", description: "De AI-toepassing waarin de gebruiker werkt. Die coördineert verbindingen, interacties met het model en machtigingen.", color: "blue" },
+  { label: "Client", description: "Het onderdeel binnen de host dat een verbinding met een MCP-server onderhoudt.", color: "green" },
+  { label: "Server", description: "Een programma dat tools, bronnen of prompts via MCP aanbiedt. Het kan lokaal of op afstand draaien.", color: "amber" }
+]} />
+
+Voor een toolaanroep kan de client de tools van de server ontdekken met `tools/list`. De toepassing maakt relevante tooldefinities beschikbaar voor het model. Als het model er een aanvraagt, kan de toepassing via haar MCP-client een `tools/call`-verzoek sturen. De server voert de bewerking uit of delegeert die en geeft het resultaat terug.
+
+Het model hoeft niet zelf een netwerkverbinding te openen. De toepassing en de MCP-implementatie regelen de communicatie. Compatibiliteit blijft belangrijk: de host en server moeten de mogelijkheden ondersteunen die je wilt gebruiken. Een tool ontdekken garandeert geen toestemming om die uit te voeren; toegangscontroles blijven gelden.
+
+### MCP biedt meer dan tools
+
+MCP definieert ook **bronnen** en **prompts**. Deze woorden hebben specifieke betekenissen in het protocol:
+
+<InfoGrid columns={3} items={[
+  { label: "Tools", description: "Bewerkingen die het model kan aanvragen, onder de controles van de toepassing. Voorbeeld: issues zoeken.", color: "blue" },
+  { label: "Bronnen", description: "Gegevens die de toepassing als context beschikbaar kan maken. Voorbeeld: een projecthandleiding met een URI.", color: "green" },
+  { label: "Prompts", description: "Herbruikbare berichtsjablonen die gebruikers kunnen kiezen, met optionele argumenten. Voorbeeld: een rapport over de beoordeling van issues opstellen.", color: "amber" }
+]} />
+
+De [gids voor MCP-serverconcepten](https://modelcontextprotocol.io/docs/learn/server-concepts) beschrijft ze als tools die door het model worden aangestuurd, bronnen die door de toepassing worden aangestuurd en prompts die door de gebruiker worden aangestuurd. Dit beschrijft de bedoelde interactiepatronen. Het neemt de machtigingscontroles van de toepassing niet weg.
+
+Een MCP-promptsjabloon is niet automatisch een skill. Een skill kan een langere procedure, referenties en scripts bundelen. Die kan de agent vertellen hoe hij tools moet gebruiken die via MCP, een directe connector of lokale functies beschikbaar zijn.
+
+## Probeer lezen en schrijven
+
+Dit voorbeeld gebruikt dezelfde fictieve tracker via twee routes. Verander de route, bewerking of het toegangsniveau en voer daarna het verzoek uit. Probeer een schrijfactie zowel goed te keuren als af te wijzen.
+
+<ToolsDemo copy={{
+  title: "Volg een toolverzoek",
+  description: "Een simulatie met een fictieve tracker. Er worden geen accounts verbonden en geen echte issues gelezen of aangemaakt. De verbonden modi gebruiken hetzelfde voorbeeldaccount.",
+  routeLabel: "Integratieroute",
+  directLabel: "Directe API",
+  mcpLabel: "MCP",
+  toolLabel: "Bewerking",
+  readLabel: "Issues zoeken",
+  writeLabel: "Een issue aanmaken",
+  accessLabel: "Toegang van de verbinding",
+  disconnectedLabel: "Niet verbonden",
+  readOnlyLabel: "Verbonden: alleen lezen",
+  readWriteLabel: "Verbonden: lezen en schrijven",
+  appLabel: "AI-toepassing",
+  hostLabel: "AI-toepassing + MCP-client",
+  connectorLabel: "Directe API-connector",
+  serverLabel: "MCP-server van de issuetracker",
+  serviceLabel: "Issuetrackerdienst",
+  requestLabel: "Toolverzoek",
+  resultLabel: "Resultaat",
+  run: "Voer het verzoek uit",
+  reset: "Opnieuw beginnen",
+  approve: "Aanmaken goedkeuren",
+  decline: "Afwijzen",
+  query: "openstaande bugs",
+  issueTitle: "Een nuttige melding bij lege zoekresultaten toevoegen",
+  policyNote: "De route verandert hoe het verzoek wordt verstuurd, niet welke toegang het heeft. Deze voorbeeldtoepassing vraagt goedkeuring voordat een issue wordt aangemaakt. Dat is toepassingsbeleid, geen algemene MCP-regel. Een gewijzigde instelling wist het resultaat.",
+  states: {
+    ready: "Kies instellingen en voer het verzoek uit. Er is nog geen bewerking uitgevoerd.",
+    disconnected: "Er is geen verbinding ingesteld. De toepassing kan de issues van dit project niet bereiken. MCP kiezen verbindt geen account en geeft geen toegang.",
+    denied: "Deze verbinding kan alleen lezen. Het aanmaken van een issue wordt vóór de uitvoering geblokkeerd. Goedkeuring van dit ene verzoek zou geen schrijfrechten toevoegen.",
+    read: "De gesimuleerde zoekopdracht geeft BUG-42 terug: de zoekpagina blijft leeg als er geen resultaten zijn. De toepassing kan dit bewijs nu aan het model geven. Er is geen issue gewijzigd.",
+    approval: "Schrijftoegang is beschikbaar, maar deze toepassing vraagt je goedkeuring voor deze actie. Controleer de titel in het verzoek. Er is nog niets aangemaakt.",
+    created: "De gesimuleerde dienst bevestigt dat FOLLOWUP-108 met de gevraagde titel is aangemaakt. Het model kan dat ID melden als bewijs van het resultaat.",
+    declined: "Het aanmaken is afgewezen. De toepassing heeft de schrijfbewerking niet naar de dienst gestuurd en er is geen nieuw issue aangemaakt."
+  }
+}} />
+
+De lees- en schrijfmodi hier horen bij onze voorbeeldintegratie. Echte machtigingen kunnen specifieker zijn. MCP geeft beide kanten een gemeenschappelijk protocol. Het bepaalt niet of je account naar het project mag schrijven of dat de toepassing het eerst moet vragen. **Authenticatie** stelt de identiteit vast; **autorisatie** bepaalt welke toegang is toegestaan. Een aparte goedkeuring kan een specifieke actie bevestigen. Externe HTTP-integraties kunnen het [MCP-autorisatieframework](https://modelcontextprotocol.io/specification/latest/basic/authorization) gebruiken; de details hangen af van de integratie.
+
+<Quiz
+  question="Een verbonden MCP-integratie heeft alleen leestoegang. Kan de agent met een duidelijkere prompt een issue aanmaken?"
+  options={[
+    "Ja, want MCP staat elke bewerking toe die het model aanvraagt",
+    "Ja, als de gebruiker dat ene verzoek goedkeurt",
+    "Nee. De integratie heeft geautoriseerde schrijftoegang nodig voordat die kan schrijven",
+    "Ja, als een skill de toolnaam create_issue bevat"
+  ]}
+  correctIndex={2}
+  explanation="Een prompt, skill of goedkeuring van een actie breidt de toegang van de verbinding niet uit. De toepassing en de dienst moeten het schrijven autoriseren."
+/>
+
+## Prompts voor een agent met tools
+
+Vertel de agent welke informatie hij moet zoeken, hoe hij die moet gebruiken en welke acties je verwacht. Neem niet zomaar aan dat er een verbinding is of dat een tool elke bewerking van de dienst ondersteunt.
+
+<Compare
+  before={{ label: "Te veel om te raden", content: "Bekijk de bugs en regel alles." }}
+  after={{ label: "Duidelijke uitkomst en grenzen", content: "Zoek in het verbonden project naar openstaande bugs over lege zoekresultaten. Vat de relevante issues samen en vermeld hun ID's. Stel zo nodig een vervolgissue op, maar vraag het voordat je het aanmaakt. Als de verbinding of de benodigde tool niet beschikbaar is, leg dan uit wat er ontbreekt. Beweer niet dat een issue is aangemaakt zonder een geslaagd toolresultaat." }}
+/>
+
+Een herbruikbare skill voor het beoordelen van issues kan de methode toevoegen: zoek naar duplicaten, vergelijk reproductiestappen, volg het issuesjabloon van het project en meld openstaande vragen. De tool levert de bewerking. De skill legt uit hoe je die goed gebruikt.
+
+Tooluitvoer moet nog steeds worden beoordeeld. Een issueopmerking, document of zoekresultaat kan fouten bevatten of tekst die op een instructie lijkt. Behandel opgehaalde inhoud als gegevens en laat die niet het verzoek van de gebruiker of de regels van de toepassing veranderen. Ondersteuning voor MCP alleen maakt een server of zijn inhoud niet betrouwbaar.
+
+Als lezen mislukt, kan de agent de fout melden of een redelijk alternatief proberen. Als een schrijfactie een time-out geeft, moet hij vóór een nieuwe poging controleren of de wijziging is uitgevoerd. Anders kan een nieuwe poging een dubbel issue aanmaken. Inloggegevens horen bij de verbindingsinstellingen van de integratie, niet in de taakprompt.
+
+<Quiz
+  question="Hoe kunnen een connector, MCP en een tool samenwerken?"
+  options={[
+    "Het zijn drie namen voor hetzelfde",
+    "Een connector kan MCP gebruiken om een bewerking van een dienst als tool aan te bieden",
+    "MCP vervangt de dienst en slaat al zijn gegevens op in het model",
+    "Een skill moet voor elke toolaanroep de netwerkverbinding aanmaken"
+  ]}
+  correctIndex={1}
+  explanation="Een connector is de integratie, MCP kan het communicatieprotocol zijn en een tool is een specifieke bewerking. Een directe API-integratie kan ook tools aanbieden zonder MCP."
+/>
+
+<InteractiveChecklist
+  title="Voordat je een nieuwe integratie gebruikt"
+  items={[
+    { id: "source", label: "Bepaal welke dienst, welk project of welke bestanden de taak nodig heeft" },
+    { id: "capabilities", label: "Controleer welke tools en bewerkingen de integratie echt aanbiedt" },
+    { id: "access", label: "Controleer de verbonden identiteit en de lees- of schrijftoegang daarvan" },
+    { id: "approval", label: "Bepaal welke acties op goedkeuring moeten wachten" },
+    { id: "evidence", label: "Controleer het teruggegeven bewijs voordat je succes meldt" }
+  ]}
+/>
+
+Het volgende hoofdstuk, [De harnesses](/book/26-the-harnesses), bekijkt de software die deze verbindingen, instructies en toolresultaten tijdens een hele taak coördineert.

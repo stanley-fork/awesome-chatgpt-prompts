@@ -22,3 +22,5 @@ export { ValidationDemo, FallbackDemo, ContentPipelineDemo } from "./elements/ch
 export { FillInTheBlank, InteractiveChecklist, PromptDebugger } from "./elements/exercises";
 export { PromptBuilder, PromptAnalyzer } from "./elements/builder";
 export { PromptChallenge, BeforeAfterEditor } from "./elements/challenge";
+export { HarnessDemo } from "./elements/harness-demo";
+export { ToolsDemo } from "./elements/tools-demo";

@@ -1,0 +1,235 @@
+Bir yapay zekadan bir hatayı düzeltmesini istiyorsunuz. Projeyi okuyor, bir dosyayı düzenliyor, test çalıştırıyor, bir hata görüyor ve yeniden deniyor. Model bu sürecin bir parçası. Ama dosyaları açacak, komutları çalıştıracak ve sonuçları geri getirecek bir şey de gerekiyor.
+
+Modeli çevreleyen bu yazılıma **harness** denir. Ajanları ve becerileri öğrendikten sonra, bunların birlikte çalışmasını sağlayan sisteme bakmak faydalı olur.
+
+## Harness Nedir?
+
+Bir **ajan harness'i**, yapay zeka ajanını çalıştıran yazılımdır. Modelin bağlamını hazırlar, araçları sunar, araç isteklerini işler ve görevin adımlarını yönetir. Uygulamaya bağlı olarak izinleri, kaydedilen ilerlemeyi, yeniden denemeleri ve sınırları da yönetebilir.
+
+İnsanlar bazen *ajan*, *framework* ve *harness* kelimelerini birbirinin yerine kullanır. Bu bölümde şu ayrımları kullanıyoruz:
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Parça</th>
+      <th scope="col">Ne yapar?</th>
+      <th scope="col">Örnek</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Model</td>
+      <td>Bir yanıt veya araç kullanma isteği üretir</td>
+      <td>Bir dosyanın okunmasını önerir</td>
+    </tr>
+    <tr>
+      <td>Harness</td>
+      <td>Sürecin geri kalanını yürütür</td>
+      <td>Erişimi kontrol eder, dosyayı okur, içeriğini geri getirir</td>
+    </tr>
+    <tr>
+      <td>Ajan</td>
+      <td>Model ve harness kullanarak bir hedef için çalışan sistemdir</td>
+      <td>Bir hatayı araştırır ve düzeltir</td>
+    </tr>
+    <tr>
+      <td>Prompt</td>
+      <td>Görev veya davranış için talimat verir</td>
+      <td>"Bu hatayı düzelt ve çalıştırdığın testleri bildir"</td>
+    </tr>
+    <tr>
+      <td>Beceri</td>
+      <td>Yeniden kullanılabilir talimatları ve isteğe bağlı kaynakları bir araya getirir</td>
+      <td>Test kontrol listesi içeren bir hata düzeltme yöntemi</td>
+    </tr>
+    <tr>
+      <td>Araç</td>
+      <td>Belirli bir işlemi yapar</td>
+      <td>Bir dosyayı okur veya test çalıştırır</td>
+    </tr>
+  </tbody>
+</table>
+
+Harness, kendi uygulamanızdaki küçük bir döngü olabilir veya daha büyük bir kodlama asistanının parçası olabilir. Birden fazla ajan ya da karmaşık bir framework içermesi gerekmez. Anthropic, ajan ile harness arasındaki bu ayrımı [ajanları değerlendirme rehberinde](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) açıklıyor.
+
+<Callout type="info" title="Aynı kelimenin iki kullanımı">
+Ajan harness'i ajanın çalışmasını yürütür. Değerlendirme harness'i ise test görevlerini çalıştırır ve sistemin ne kadar iyi performans gösterdiğini ölçer. Birlikte çalışabilirler, ama görevleri farklıdır.
+</Callout>
+
+## Döngü Nasıl Çalışır?
+
+Görevin boş arama sonuçları sayfasını iyileştirmek olduğunu düşünün. Tipik bir döngü şöyle işler:
+
+1. **Bağlamı hazırla.** İsteği, proje talimatlarını, ilgili becerinin talimatlarını ve kullanılabilir araç tanımlarını ekle.
+2. **Modeli çağır.** Model doğrudan yanıt verebilir veya arama bileşenini okumak gibi bir araç isteğinde bulunabilir.
+3. **Kontrol et ve çalıştır.** Harness, araç çalışmadan önce isteği doğrular ve izinleri kontrol eder.
+4. **Gözlemi geri getir.** Dosya içeriği, komut çıktısı veya hata modelin bağlamına geri eklenir.
+5. **Devam et veya dur.** Model sonraki adımı için bu kanıtı kullanır. Harness ayrıca sınırları uygular ve kullanıcıdan bilgi almak için duraklayabilir.
+
+Yanıta "testleri çalıştır" yazmak hiçbir şey çalıştırmaz. Komutu gerçek bir araç yürütmeli ve sonuç geri gelmelidir. Bu geri bildirim, ajanın gerçekten olanlara göre hareket etmesini sağlar. Anthropic'in [ajan iş akışları açıklamasına](https://www.anthropic.com/engineering/building-effective-agents) bakabilirsiniz.
+
+### Aynı Görevi Farklı Bir Kurulumla Deneyin
+
+Bir ayarı değiştirin, ardından çalışmayı adım adım ilerletin. Bağlamın, araç isteğinin ve son raporun nasıl değiştiğine bakın.
+
+<HarnessDemo copy={{
+  title: "Harness'in içinde",
+  description: "Önceden hazırlanmış bir simülasyon. Burada yapay zeka çağrısı yapılmaz, dosya işlemi veya komut çalıştırılmaz. Gerçek ajanlar farklı yollar izleyebilir.",
+  taskLabel: "Görev",
+  task: "Boş arama sonuçları sayfasını düzelt.",
+  modelLabel: "Model",
+  model: "Her çalıştırmada aynı model",
+  controlsLabel: "Kurulumu değiştir",
+  resetHint: "Bir ayarı değiştirmek çalışmayı sıfırlar. Beceri, yöntemi belirlemeye yardımcı olur; her görev için gerekli değildir.",
+  traceLabel: "Çalışma kaydı",
+  ready: "Hazır",
+  running: "Çalışıyor",
+  complete: "Kontroller tamamlandı",
+  unverified: "Doğrulanmadı",
+  start: "Döngüyü başlat",
+  next: "Sonraki adım",
+  reset: "Sıfırla",
+  controls: {
+    clearPrompt: { label: "Açık prompt", description: "Beklenen davranışı ve yapılacak kontrolleri tanımla." },
+    skill: { label: "Hata düzeltme becerisi", description: "Hatayı yeniden üretmek ve kontrol etmek için yeniden kullanılabilir bir yöntem yükle." },
+    tools: { label: "Araç erişimi", description: "Proje dosyalarını okumaya, düzenlemeye ve test çalıştırmaya izin ver." }
+  },
+  steps: {
+    context: {
+      title: "Harness bağlamı hazırlar",
+      clearPrompt: "Arama davranışını değiştirmeden faydalı bir boş durum göster. Arama testlerini çalıştır ve sonuçları bildir.",
+      vaguePrompt: "Boş arama sonuçları sayfasını düzelt. Beklenen davranış ve kabul kontrolleri belirtilmedi.",
+      skillLoaded: "Beceri yüklendi: sorunu yeniden üret, küçük bir değişiklik yap, boş ve dolu sonuçları kontrol et.",
+      skillMissing: "Beceri yüklenmedi. Model, göreve ve diğer talimatlara göre bir yöntem seçmeli."
+    },
+    request: {
+      title: "Model bir araç isteğinde bulunur",
+      guided: "Model, beceriyi izleyerek boş durumu yeniden üretmek için arama bileşenini ve testlerini ister.",
+      unguided: "Model arama bileşenini ister. Bu çalışmaya yeniden kullanılabilir bir yöntem eklenmedi."
+    },
+    permission: {
+      title: "Harness erişimi kontrol eder",
+      allowed: "İstenen proje işlemlerine bu simülasyonda izin veriliyor. Harness araç çağrısını iletir.",
+      blocked: "Proje araçları kullanılamıyor. Bir istek dosyaları okuyamaz veya değiştiremez; prompt da erişim sağlayamaz."
+    },
+    observation: {
+      title: "Araç sonuçları modele döner",
+      guided: "Bileşen ve testler, sonuç olmadığında sayfanın boş kaldığını gösterir. Model küçük bir yama hazırlar ve hem boş hem de dolu sonuçları kontrol eder.",
+      unguided: "Bileşen, sonuç olmadığında sayfanın boş kaldığını gösterir. Model elindeki talimatlara göre bir yama hazırlar.",
+      unavailable: "Dosya içeriği veya test çıktısı yok. Model yol gösterebilir ya da eksik bilgiyi isteyebilir."
+    },
+    review: {
+      title: "Döngü çalışmayı kontrol eder",
+      checked: "İzin verilen düzenlemeden sonra test aracı, arama kontrollerinin geçtiğini bildirir. Model bu kanıtı istenen davranışla karşılaştırabilir.",
+      unclear: "Bir yama yapıldı, ama bu çalışmada üzerinde anlaşılmış kabul kontrolleri yok. Dosya değişikliği tek başına görevin tamamlandığını göstermez.",
+      unavailable: "Harness'in elinde işlemin yapıldığına dair kanıt yok. Model dosya değişikliği veya geçen testler bildirmemeli."
+    },
+    finish: {
+      title: "Çalışma durur ve rapor verir",
+      verified: "Simülasyondaki rapor, değişikliği ve geçen kontrolleri listeler. Bu kontroller kanıt sağlar, hiçbir hata kalmadığını garanti etmez.",
+      unverified: "Simülasyondaki rapor, nelerin hâlâ doğrulanmadığını ve sonra ne gerektiğini açıklar. Kesinleşmiş bir düzeltme iddia etmez."
+    }
+  }
+}} />
+
+Bunlar örnek sonuçlardır; her modelin ne yapacağını belirleyen kurallar değildir. Bir model, belirsiz bir prompt ile bile faydalı bir soru sorabilir. Açık talimatlar, beklentilerinizin izlenmesini ve kontrol edilmesini kolaylaştırır.
+
+## Harness İçinde Promptlar Neden Önemlidir?
+
+Harness, modele işlem yapabileceği bir yol sağlar. Promptlarınız ise faydalı bir işlemin nasıl olması gerektiğini anlatır. Açık bir hedef olmadan ajan, ihtiyaç duymadığınız işler için birçok adım harcayabilir.
+
+Güncel istek, talimatların yalnızca bir parçasıdır. Uygulama ayrıca sistem prompt'u, proje kuralları, araç açıklamaları ve yüklenen becerinin talimatlarını sunabilir. Harness bunların bağlama nasıl gireceğine karar verir; model de sistemin kullandığı talimat hiyerarşisini izler.
+
+<Compare
+  before={{ label: "Belirsiz görev", content: "Aramayı düzelt. Daha iyi yap." }}
+  after={{ label: "Ajanın kontrol edebileceği bir görev", content: "Arama sonucu bulunamadığında faydalı bir boş durum göster. Eşleştirme davranışını değiştirme. Mevcut arayüz kalıplarını izle ve yeni metinler için çevirileri kullan. İlgili testleri çalıştır. Neyin değiştiğini, hangi kontrollerin geçtiğini ve doğrulayamadığın şeyleri bildir." }}
+/>
+
+Her tıklamayı veya komutu anlatmanız gerekmez. Sonucu, ilgili kısıtları ve neyin tamamlanmış sayılacağını tanımlayın. Esnekliğin faydalı olduğu yerlerde rutin adımları ajanın seçmesine izin verin.
+
+Araç açıklamaları da prompt yazmanın bir parçasıdır. Girdileri, çıktıları ve sınırları açık olan bir aracı modelin doğru kullanması daha kolaydır. Araçları açıklamadan sayılarını artırmak kafa karışıklığı yaratabilir.
+
+## Becerilerin Yeri
+
+Prompt genellikle güncel görevi anlatır. **Beceri** ise görevler arasında yeniden kullanmak istediğiniz bir yöntemi içerir: bir değişikliği incelemek, bir hatayı araştırmak veya rapor hazırlamak gibi.
+
+[Agent Skills biçiminde](https://agentskills.io/specification) bir becerinin `SKILL.md` dosyası vardır; betikler, referanslar ve diğer kaynaklar da içerebilir. Uyumlu bir harness, becerileri keşfedilebilir hale getirir. Önce adlarını ve açıklamalarını sunabilir, ilgili olduğunda seçilen becerinin talimatlarını yükleyebilir ve destekleyici dosyaları yalnızca gerektiğinde okuyabilir. Buna **aşamalı yükleme** denir.
+
+<Collapsible title="Küçük bir hata düzeltme becerisini aç">
+
+```markdown
+---
+name: verify-bug-fix
+description: Mevcut bir projede yeniden üretilebilen bir hatayı düzeltirken kullan.
+---
+
+1. Proje talimatlarını ve ilgili kodu oku.
+2. Bildirilen davranışı yeniden üret veya neden yapamadığını açıkla.
+3. Sorunun nedenini gideren en küçük değişikliği yap.
+4. Çalışmaya devam etmesi gereken yakın bir durumu da içeren ilgili kontrolleri çalıştır.
+5. Değişikliği, kanıtları ve kalan belirsizlikleri bildir.
+
+Gerekli bir araç kullanılamıyorsa bu sınırlamayı açıkla.
+Çalıştırılmayan bir kontrolü geçmiş gibi anlatma.
+```
+
+</Collapsible>
+
+Harness'in yine de becerinin beklediği araçlara ve ortama ihtiyacı vardır. Tarayıcı testi anlatan bir beceri, tarayıcı kurmaz. Bir betiğin bağımlılıkları olabilir. Farklı araçları olan başka bir harness'e taşındığında talimatların değişmesi gerekebilir. Beceri yüklemek modeli eğitmez ve uzmanlığı da garanti etmez.
+
+Bugüne özel konular için görev prompt'unu kullanın. Tekrarlanan bir yöntemi beceriye koyun. Ortak proje kurallarını harness'inizin desteklediği talimat dosyalarında tutun. Böylece her isteğe büyük ve biraz farklı bir kontrol listesi kopyalamazsınız.
+
+<Quiz
+  question="Bir beceri tarayıcı testlerini çalıştırmayı söylüyor, ama harness'in tarayıcı aracı yok. Ne olmalı?"
+  options={[
+    "Beceri otomatik olarak tarayıcı erişimi oluşturur",
+    "Ajan sınırlamayı bildirmeli ve mevcut bir alternatifi kullanmalı ya da ihtiyacı olanı istemeli",
+    "Ajan kodu okuduktan sonra testleri geçmiş olarak işaretleyebilir",
+    "Daha uzun bir prompt tarayıcıyı kullanılabilir hale getirir"
+  ]}
+  correctIndex={1}
+  explanation="Beceri talimatları ve bazı kaynakları sağlar. Gerçek yetenekleri harness ve ortam sağlar. Eksik işlem kanıtı açıkça belirtilmelidir."
+/>
+
+## Talimatlar ve İzinler Farklı İşler Yapar
+
+"Bu projenin dışındaki dosyaları düzenleme" faydalı bir talimattır. Bu yazma işlemlerini engelleyen bir dosya sistemi sınırı ise zorunlu uygulanan bir kontroldür. Güvenilir kurulumlar ikisini de kullanır.
+
+İzinler, yalıtılmış çalışma ortamı ve onay kontrolleri harness, araçları veya alttaki ortam tarafından uygulanmalıdır. Prompt bunları tek başına zorunlu kılamaz. [VS Code ajan güvenliği belgeleri](https://code.visualstudio.com/docs/agents/run/security) bu kontrollerin somut örneklerini gösterir.
+
+Aynı ayrım, araçlardan dönen bilgiler için de önemlidir. Bir web sayfası veya depo dosyası, talimat gibi görünen metin içerebilir. Güvenilir bir talimat kaynağından gelmiyorsa bu metni görev verisi olarak ele alın. Erişimi işin gerektirdiğiyle sınırlı tutun.
+
+<Quiz
+  question="Bir aracın izin verilen dizinin dışına yazmasını gerçekten hangi kontrol engeller?"
+  options={[
+    "Kısıtlamayı büyük harflerle tekrarlamak",
+    "Ajana dikkatli bir persona vermek",
+    "Dizin sınırını araçta veya çalışma ortamında zorunlu olarak uygulamak",
+    "Beceriye daha fazla örnek eklemek"
+  ]}
+  correctIndex={2}
+  explanation="Promptlar davranışa yön verir. Model izin verilmeyen bir işlem istese bile araç veya ortam erişim sınırını uygulamalıdır."
+/>
+
+## Bir Harness'i Faydalı Yapan Nedir?
+
+Daha fazla özerklik, ancak sistem çalışmasını kontrol edebiliyor ve sorunlardan sonra toparlanabiliyorsa faydalıdır. Uzun bir görev için harness'in şunları nasıl yönettiğine bakın:
+
+- **Bağlam:** İlgili talimatları ve kanıtları erişilebilir tutmak. Eski adımları özetlemek yer kazandırabilir, ama ayrıntıları da kaybettirebilir.
+- **İlerleme:** Sonraki oturumun devam edebilmesi için kararları ve bitmemiş işleri kaydetmek. Kaydedilen durumun yine de bağlama yüklenmesi gerekir.
+- **Hatalar:** Hataları açıkça geri döndürmek, sınırlı sayıda yeniden denemek ve yan etkileri olan işlemleri düşünmeden tekrarlamamak.
+- **Sınırlar:** Süre, maliyet veya adım bütçesi dolduğunda ya da kullanıcıdan bilgi gerektiğinde durmak. Durmak, başarının kanıtı değildir.
+- **Doğrulama:** Gerçek dosyaları, test sonuçlarını veya diğer çıktıları incelemek. Kendinden emin bir son mesaj yeterli değildir.
+
+Kurulumları karşılaştırırken aynı gerçek görevleri deneyin; hem sonuçları hem de çalışma kayıtlarını inceleyin. Bir harness değişikliğini incelemek istediğinizde modeli sabit tutun. Her seferinde yalnızca bir prompt'u, beceriyi veya araç ayarını değiştirin. Tekil çalışmalar farklı sonuçlar verebildiği için görevleri tekrarlayın.
+
+<InteractiveChecklist
+  title="Bunu zaten yaptığınız bir görevde deneyin"
+  items={[
+    { id: "outcome", label: "Beklenen sonucu ve onu nasıl kontrol edeceğinizi yazın" },
+    { id: "tools", label: "Görevin ihtiyaç duyduğu araçları ve erişimi seçin" },
+    { id: "skill", label: "Tekrarlanan bir yöntemi küçük bir beceriye taşıyın" },
+    { id: "limits", label: "Bir araç hata verdiğinde veya sınıra ulaşıldığında ne olacağına karar verin" },
+    { id: "evidence", label: "Görevi çalıştırın ve raporu gerçek kanıtlarla karşılaştırın" }
+  ]}
+/>

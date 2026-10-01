@@ -1,0 +1,209 @@
+Agentdən layihənizdəki açıq xətaları tapmasını və əlavə iş üçün qeyd qaralaması hazırlamasını istəyirsiniz. Bunun üçün yaxşı təlimatlardan daha çox şey lazımdır. Agent xəta izləmə sisteminizə çatmalı, düzgün məlumatı oxumalı və bəlkə də orada yeni qeyd yaratmalıdır.
+
+**Alətlər**, **bağlayıcılar** və **MCP** burada işə düşür. Onlar əlaqəlidir, amma quraşdırmanın fərqli hissələrini təsvir edirlər.
+
+## Alətlər, API-lər, Bağlayıcılar və MCP
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Termin</th>
+      <th scope="col">Mənası</th>
+      <th scope="col">Xəta izləmə sistemi nümunəsi</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Alət</td>
+      <td>Agent üçün mövcud olan müəyyən əməliyyat</td>
+      <td>Qeydləri axtarmaq və ya qeyd yaratmaq</td>
+    </tr>
+    <tr>
+      <td>API</td>
+      <td>Proqramın başqa sistemlə əlaqə saxlamaq üçün istifadə etdiyi interfeys</td>
+      <td>İzləmə sisteminin qeydləri oxumaq və yazmaq üçün təqdim etdiyi son nöqtələr</td>
+    </tr>
+    <tr>
+      <td>Bağlayıcı</td>
+      <td>Süni intellekt tətbiqini xidmətə və ya məlumat mənbəyinə bağlayan inteqrasiya</td>
+      <td>Hesab bağlantısı və dəstəklənən əməliyyatları ilə xəta izləmə inteqrasiyası</td>
+    </tr>
+    <tr>
+      <td>MCP</td>
+      <td>Süni intellekt tətbiqləri ilə kontekst mübadiləsi və imkanların təqdim edilməsi üçün protokol</td>
+      <td>İzləmə alətlərini tapmaq və çağırmaq üçün ortaq yol</td>
+    </tr>
+  </tbody>
+</table>
+
+Alət yerli olaraq da işləyə bilər. Kalkulyatora hesab bağlantısı lazım deyil. Fayl oxuma aləti tamamilə kompüterinizdə işləyə bilər. Xarici xidmət alətlərin mümkün mənbələrindən yalnız biridir.
+
+## Alət Əslində Nələrdən İbarətdir?
+
+Alətin adətən **adı**, **təsviri**, **giriş sxemi** və işi görən proqram kodu olur. Təsvir modelə aləti nə vaxt istifadə edəcəyini seçməyə kömək edir. Sxem qəbul edilən arqumentləri təsvir edir.
+
+Budur kiçik, uydurma MCP alətinin tərifi:
+
+<Collapsible title="search_issues tərifini nəzərdən keçirin">
+
+```json
+{
+  "name": "search_issues",
+  "description": "Bağlı layihədə qeydləri axtar. Bu alət yalnız məlumat oxuyur.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string" },
+      "limit": { "type": "integer", "minimum": 1, "maximum": 20 }
+    },
+    "required": ["query"],
+    "additionalProperties": false
+  }
+}
+```
+
+</Collapsible>
+
+Model `{"query": "açıq xətalar", "limit": 3}` arqumentləri ilə `search_issues` sorğusu verə bilər. Tətbiq bu sorğunu əməliyyatı icra edən koda yönəldir. Kod izləmə sisteminə sorğu göndərir və nəticələri və ya xətanı qaytarır.
+
+Ad və sxem öz-özünə heç nə icra etmir. Alətin kodu girişləri yoxlamalı, girişi nəzarətdə saxlamalı və həqiqi əməliyyatı yerinə yetirməlidir. Alətin cavabı da modelin yekun cavabından ayrıdır: cavabda qeyd identifikatorları və başlıqlar ola bilər, model isə onları xülasə edir. [MCP alətləri spesifikasiyası](https://modelcontextprotocol.io/specification/latest/server/tools) alətlərin bu əməliyyatları necə təqdim etdiyini izah edir.
+
+<Callout type="info" title="Sorğu nəticə deyil">
+"Qeyd yaradacağam" bir ifadədir. Alət çağırışı əməliyyatı tələb edir. Yeni qeydin identifikatorunu ehtiva edən uğurlu cavab isə əməliyyatın baş verdiyinə sübutdur. Bu üç şeyi ayırın.
+</Callout>
+
+## Bağlayıcı Nə Əlavə Edir?
+
+Bağlayıcı müəyyən sistemlə inteqrasiyanı birləşdirir. Daxil olmağı, hesab və ya iş sahəsi seçməyi, məlumat tapmağı və dəstəklənən əməliyyatları alət kimi təqdim etməyi idarə edə bilər. Bəzi bağlayıcılar yalnız axtarır və ya oxuyur. Digərləri yazmanı da dəstəkləyir.
+
+**Bağlayıcı vahid universal texniki standart deyil, məhsul terminidir.** Bir bağlayıcı xidmətin API-sini birbaşa çağıra bilər. Digəri MCP serverindən istifadə edə bilər. Başqası sinxronlaşdırılmış sənədlərdən yaradılan indeksdə axtara bilər. Konkret inteqrasiyanın nəyi dəstəklədiyini yoxlayın. Microsoft-un [bağlayıcılara ümumi baxışı](https://learn.microsoft.com/en-us/azure/connectors/introduction) API-lər üzərində qurulan inteqrasiyalara bir nümunə verir.
+
+Hesabı bağlamaq agentin hər faylı gördüyü, bütün məlumatınızı kontekstinə yüklədiyi və ya hər əməliyyata icazəsi olduğu demək deyil. Giriş hesabdan, təyin edilmiş icazə əhatələrindən, tətbiqdən və xidmətin öz icazələrindən asılıdır. Axtarış nəticələri də orijinal sənədlərdən daha köhnə indeksə əsaslana bilər.
+
+Xəta izləmə sistemi üçün bu sualları ayrı saxlayın: Bağlantı qurulubmu? Hansı layihəyə girişi var? Yalnız oxuya bilər, yoxsa qeyd də yarada bilər?
+
+## MCP Nəyi Standartlaşdırır?
+
+**MCP**, **Model Context Protocol** ifadəsinin qısaltmasıdır. Süni intellekt tətbiqləri və xarici imkan təminatçıları arasında əlaqə üçün ortaq yol müəyyən edir. Xidmətin API-sini əvəz etmir; MCP serveri arxa planda həmin API-dən istifadə edə bilər.
+
+[MCP arxitekturasında](https://modelcontextprotocol.io/docs/learn/architecture) üç əsas rol var:
+
+<InfoGrid columns={3} items={[
+  { label: "Əsas tətbiq", description: "İstifadəçinin işlədiyi süni intellekt tətbiqi. Bağlantıları, modellə qarşılıqlı əlaqəni və icazələri əlaqələndirir.", color: "blue" },
+  { label: "Müştəri", description: "Əsas tətbiqin daxilində MCP serveri ilə bağlantını saxlayan hissə.", color: "green" },
+  { label: "Server", description: "MCP vasitəsilə alətlər, resurslar və ya promptlar təqdim edən proqram. Yerli və ya uzaqda işləyə bilər.", color: "amber" }
+]} />
+
+Alət çağırışı üçün müştəri `tools/list` ilə serverin alətlərini tapa bilər. Tətbiq uyğun alət təriflərini modelə təqdim edir. Model onlardan birini istəyirsə, tətbiq MCP müştərisi vasitəsilə `tools/call` sorğusu göndərə bilər. Server əməliyyatı icra edir və ya başqa hissəyə ötürür, sonra nəticəni qaytarır.
+
+Modelin özünün şəbəkə bağlantısı açması lazım deyil. Əlaqəni tətbiq və MCP-ni həyata keçirən proqram idarə edir. Uyğunluq yenə vacibdir: əsas tətbiq və server istifadə etmək istədiyiniz imkanları dəstəkləməlidir. Aləti tapmaq onu işlətməyə icazə vermir; giriş yoxlamaları yenə tətbiq olunur.
+
+### MCP Alətlərdən Daha Çoxunu Təqdim Edir
+
+MCP **resursları** və **promptları** da müəyyən edir. Bu sözlərin protokol daxilində xüsusi mənaları var:
+
+<InfoGrid columns={3} items={[
+  { label: "Alətlər", description: "Modelin tətbiqin nəzarət qaydalarına uyğun olaraq istəyə bildiyi əməliyyatlar. Nümunə: qeydləri axtarmaq.", color: "blue" },
+  { label: "Resurslar", description: "Tətbiqin kontekst kimi təqdim edə bildiyi məlumatlar. Nümunə: URI ilə müəyyən edilən layihə bələdçisi.", color: "green" },
+  { label: "Promptlar", description: "İstifadəçilərin seçə bildiyi, əlavə arqumentlər qəbul edən təkrar istifadə olunan mesaj şablonları. Nümunə: qeydləri qiymətləndirən hesabat hazırlamaq.", color: "amber" }
+]} />
+
+[MCP server anlayışları bələdçisi](https://modelcontextprotocol.io/docs/learn/server-concepts) bunları modelin idarə etdiyi alətlər, tətbiqin idarə etdiyi resurslar və istifadəçinin idarə etdiyi promptlar kimi təsvir edir. Bunlar nəzərdə tutulan qarşılıqlı əlaqə formalarını göstərir. Tətbiqin icazə yoxlamalarını aradan qaldırmırlar.
+
+MCP prompt şablonu avtomatik olaraq bacarıq sayılmır. Bacarıq daha uzun proseduru, istinadları və skriptləri birləşdirə bilər. Agentə MCP, birbaşa bağlayıcı və ya yerli funksiyalar vasitəsilə verilən alətlərdən necə istifadə edəcəyini deyə bilər.
+
+## Oxuma və Yazmanı Sınayın
+
+Bu nümunə eyni uydurma izləmə sistemindən iki yol vasitəsilə istifadə edir. Yolu, əməliyyatı və ya giriş səviyyəsini dəyişin, sonra sorğunu işlədin. Yazma üçün həm təsdiqi, həm də rəddi sınayın.
+
+<ToolsDemo copy={{
+  title: "Alət sorğusunu izləyin",
+  description: "Uydurma izləmə sistemi ilə əvvəlcədən hazırlanmış simulyasiya. Heç bir hesab bağlanmır, həqiqi qeydlər oxunmur və yaradılmır. Bağlı rejimlər eyni nümunə hesabdan istifadə edir.",
+  routeLabel: "İnteqrasiya yolu",
+  directLabel: "Birbaşa API",
+  mcpLabel: "MCP",
+  toolLabel: "Əməliyyat",
+  readLabel: "Qeydləri axtar",
+  writeLabel: "Qeyd yarat",
+  accessLabel: "Bağlantı girişi",
+  disconnectedLabel: "Bağlı deyil",
+  readOnlyLabel: "Bağlı: yalnız oxuma",
+  readWriteLabel: "Bağlı: oxuma və yazma",
+  appLabel: "Süni intellekt tətbiqi",
+  hostLabel: "Sİ tətbiqi + MCP müştərisi",
+  connectorLabel: "Birbaşa API bağlayıcısı",
+  serverLabel: "İzləmə sistemi MCP serveri",
+  serviceLabel: "Xəta izləmə xidməti",
+  requestLabel: "Alət sorğusu",
+  resultLabel: "Nəticə",
+  run: "Sorğunu işlət",
+  reset: "Sıfırla",
+  approve: "Yaratmanı təsdiqlə",
+  decline: "Rədd et",
+  query: "açıq xətalar",
+  issueTitle: "Axtarışa faydalı boş vəziyyət əlavə et",
+  policyNote: "Yol sorğunun necə ötürüldüyünü dəyişir, hansı girişə malik olduğunu yox. Bu nümunə tətbiq qeyd yaratmazdan əvvəl təsdiq tələb edir; bu tətbiq qaydasıdır, universal MCP qaydası deyil. Ayarı dəyişmək nəticəni sıfırlayır.",
+  states: {
+    ready: "Quraşdırmanı seçin və sorğunu işlədin. Hələ heç bir əməliyyat icra edilməyib.",
+    disconnected: "Bağlantı qurulmayıb. Tətbiq bu layihənin qeydlərinə çata bilmir. MCP seçmək hesabı bağlamır və giriş vermir.",
+    denied: "Bu bağlantı yalnız oxuya bilər. Qeyd yaratmaq icradan əvvəl bloklanır. Bu sorğunu təsdiqləmək yazma icazəsi əlavə etməz.",
+    read: "Simulyasiyadakı axtarış BUG-42 qaytarır: uyğun nəticə olmayanda axtarış səhifəsi boş qalır. Tətbiq indi bu sübutu modelə verə bilər. Heç bir qeyd dəyişməyib.",
+    approval: "Yazma girişi var, amma bu tətbiq əməliyyat üçün təsdiqinizi tələb edir. Sorğudakı başlığı yoxlayın. Hələ heç nə yaradılmayıb.",
+    created: "Simulyasiyadakı xidmət tələb olunan başlıqla FOLLOWUP-108 yaradıldığını təsdiqləyir. Model bu identifikatoru nəticənin sübutu kimi bildirə bilər.",
+    declined: "Yaratma rədd edildi. Tətbiq yazma əməliyyatını xidmətə göndərmədi və yeni qeyd yaradılmadı."
+  }
+}} />
+
+Buradakı oxuma və yazma rejimləri nümunə inteqrasiyamıza aiddir. Həqiqi icazələr daha dəqiq ola bilər. MCP iki tərəfə ortaq protokol verir. Hesabınızın layihəyə yaza biləcəyinə və ya tətbiqin əvvəlcə sizdən soruşmalı olduğuna qərar vermir. **Autentifikasiya** kimliyi müəyyən edir; **avtorizasiya** icazə verilən girişi müəyyən edir. Ayrı təsdiq konkret əməliyyatı təsdiqləyə bilər. Uzaq HTTP inteqrasiyaları [MCP avtorizasiya çərçivəsindən](https://modelcontextprotocol.io/specification/latest/basic/authorization) istifadə edə bilər; təfərrüatlar inteqrasiyadan asılıdır.
+
+<Quiz
+  question="Bağlı MCP inteqrasiyasının yalnız oxuma girişi var. Agent daha aydın prompt ilə qeyd yarada bilərmi?"
+  options={[
+    "Bəli, çünki MCP modelin istədiyi hər əməliyyata icazə verir",
+    "Bəli, istifadəçi həmin sorğunu təsdiqləsə",
+    "Xeyr. Yazma əməliyyatından əvvəl inteqrasiyanın səlahiyyətli yazma girişinə ehtiyacı var",
+    "Bəli, bacarıqda create_issue alətinin adı varsa"
+  ]}
+  correctIndex={2}
+  explanation="Prompt, bacarıq və ya əməliyyat təsdiqi bağlantının girişini genişləndirmir. Tətbiq və xidmət yazmaya icazə verməlidir."
+/>
+
+## Alətləri Olan Agentə Prompt Yazmaq
+
+Agentə hansı məlumatı axtarmalı, ondan necə istifadə etməli olduğunu və hansı əməliyyatları gözlədiyinizi deyin. Bağlantının mövcud olduğunu və ya alətin xidmətdəki hər əməliyyatı dəstəklədiyini fərz etməyin.
+
+<Compare
+  before={{ label: "Təxminə çox şey buraxılıb", content: "Xətalara bax və hər şeyi həll et." }}
+  after={{ label: "Aydın nəticə və sərhədlər", content: "Bağlı layihədə boş axtarış nəticələri barədə açıq xətaları axtar. Uyğun qeydləri xülasə et və identifikatorlarını əlavə et. Lazımdırsa, əlavə iş üçün qeyd qaralaması hazırla, amma yaratmazdan əvvəl soruş. Bağlantı və ya lazımi alət mövcud deyilsə, nəyin çatışmadığını izah et. Uğurlu alət nəticəsi olmadan qeyd yaradıldığını iddia etmə." }}
+/>
+
+Təkrar istifadə olunan qeyd qiymətləndirmə bacarığı üsulu əlavə edə bilər: təkrar qeydləri yoxla, problemi təkrar yaratma addımlarını müqayisə et, layihənin qeyd şablonunu izlə və cavabsız sualları bildir. Alət əməliyyatı təmin edir. Bacarıq ondan düzgün istifadə etməyi izah edir.
+
+Alət çıxışını da qiymətləndirmək lazımdır. Qeyd şərhi, sənəd və ya axtarış nəticəsində səhvlər və ya təlimata bənzər mətn ola bilər. Gətirilən məzmunun istifadəçinin istəyini və ya tətbiqin qaydalarını dəyişməsinə imkan verməyin; onu məlumat kimi qəbul edin. Təkcə MCP dəstəyi serveri və məzmununu etibarlı etmir.
+
+Oxuma uğursuz olarsa, agent xətanı bildirə və ya uyğun alternativ sınaya bilər. Yazma sorğusunun vaxtı bitərsə, təkrarlamazdan əvvəl dəyişikliyin baş verib-vermədiyini yoxlamalıdır. Əks halda təkrar cəhd eyni qeydi iki dəfə yarada bilər. Giriş məlumatları tapşırıq prompt-una deyil, inteqrasiyanın bağlantı ayarlarına aiddir.
+
+<Quiz
+  question="Bağlayıcı, MCP və alət birlikdə necə işləyə bilər?"
+  options={[
+    "Bunlar eyni şeyin üç adıdır",
+    "Bağlayıcı xidmət əməliyyatını alət kimi təqdim etmək üçün MCP-dən istifadə edə bilər",
+    "MCP xidməti əvəz edir və bütün məlumatlarını modelin daxilində saxlayır",
+    "Hər alət çağırışı üçün şəbəkə bağlantısını bacarıq yaratmalıdır"
+  ]}
+  correctIndex={1}
+  explanation="Bağlayıcı inteqrasiyadır, MCP onun əlaqə protokolu ola bilər, alət isə konkret əməliyyatdır. Birbaşa API inteqrasiyası da MCP olmadan alətlər təqdim edə bilər."
+/>
+
+<InteractiveChecklist
+  title="Yeni inteqrasiyadan istifadə etməzdən əvvəl"
+  items={[
+    { id: "source", label: "Tapşırığa lazım olan xidməti, layihəni və ya faylları müəyyən edin" },
+    { id: "capabilities", label: "İnteqrasiyanın həqiqətən hansı alət və əməliyyatları təqdim etdiyini yoxlayın" },
+    { id: "access", label: "Bağlı kimliyi və onun oxuma və ya yazma girişini yoxlayın" },
+    { id: "approval", label: "Hansı əməliyyatların təsdiq gözləməli olduğunu müəyyən edin" },
+    { id: "evidence", label: "Uğur bildirməzdən əvvəl qaytarılan sübutu yoxlayın" }
+  ]}
+/>
+
+Növbəti [Harness-lər](/book/26-the-harnesses) bölməsi bütün tapşırıq boyunca bu bağlantıları, təlimatları və alət nəticələrini əlaqələndirən proqramı araşdırır.

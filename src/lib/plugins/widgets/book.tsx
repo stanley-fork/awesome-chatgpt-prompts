@@ -125,7 +125,7 @@ function BookWidget() {
             The Interactive Book of Prompting
           </h3>
           <p className="text-xs text-muted-foreground mb-4">
-            Master AI prompting with 25 interactive chapters.
+            Master AI prompting with 28 interactive chapters.
           </p>
           <Button asChild size="sm" className="w-full">
             <Link href="https://fka.gumroad.com/l/art-of-chatgpt-prompting">

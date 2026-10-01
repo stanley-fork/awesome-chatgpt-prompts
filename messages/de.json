@@ -1251,7 +1251,7 @@
     "interactiveBanner": {
       "badge": "Interaktive Version Verfügbar",
       "title": "Möchten Sie ein detaillierteres und interaktives Erlebnis?",
-      "description": "Tauchen Sie tiefer ein mit unserem umfassenden interaktiven Leitfaden mit 26 Kapiteln, praktischen Übungen und Beispielen aus der Praxis.",
+      "description": "Tauchen Sie tiefer ein mit unserem umfassenden interaktiven Leitfaden mit 28 Kapiteln, praktischen Übungen und Beispielen aus der Praxis.",
       "cta": "Das interaktive Buch lesen"
     },
     "generalTips": {
@@ -1721,7 +1721,7 @@
     "donate": "Projekt unterstützen",
     "subtitle": "Ein Interaktiver Leitfaden zur Erstellung Klarer und Effektiver Prompts",
     "metaTitle": "Das Interaktive Buch des Promptings | Kostenloser Online-Leitfaden für KI-Prompt-Engineering",
-    "metaDescription": "Meistern Sie KI-Prompt-Engineering mit diesem kostenlosen, interaktiven Leitfaden. Lernen Sie ChatGPT-Prompts, Chain-of-Thought-Reasoning, Few-Shot-Learning und fortgeschrittene Techniken. 25+ Kapitel mit echten Beispielen.",
+    "metaDescription": "Meistern Sie KI-Prompt-Engineering mit diesem kostenlosen, interaktiven Leitfaden. Lernen Sie ChatGPT-Prompts, Chain-of-Thought-Reasoning, Few-Shot-Learning und fortgeschrittene Techniken. 28+ Kapitel mit echten Beispielen.",
     "interactiveGuideBy": "Ein Interaktiver Leitfaden von",
     "authorIntro": "Hallo, ich bin <author>Fatih Kadir Akın</author>, der Kurator des beliebten <repoLink>Awesome ChatGPT Prompts</repoLink>-Repositories auf GitHub und von <siteName>prompts.chat</siteName>.",
     "bookDescription": "In diesem umfassenden und interaktiven Leitfaden entdecken Sie Expertenstrategien zur Erstellung überzeugender KI-Prompts, die ansprechende und effektive Gespräche fördern. Vom Verständnis der Funktionsweise von KI-Modellen bis zur Beherrschung fortgeschrittener Techniken wie Prompt-Chaining und agentische Systeme bietet Ihnen dieses Buch die Werkzeuge, die Sie benötigen, um Ihre KI-Interaktionen auf die nächste Stufe zu heben.",
@@ -1743,7 +1743,7 @@
       "part4": "Teil 4: Best Practices",
       "part5": "Teil 5: Anwendungsfälle",
       "part6": "Teil 6: Fazit",
-      "chapters": "26 Interaktive Kapitel"
+      "chapters": "28 Interaktive Kapitel"
     },
     "startReading": "Jetzt Lesen",
     "skipToChapter1": "Zu Kapitel 1 springen",
@@ -1811,7 +1811,9 @@
       "21-business-productivity": "Business & Produktivität",
       "22-creative-arts": "Kreative Künste",
       "23-research-analysis": "Forschung & Analyse",
-      "24-future-of-prompting": "Die Zukunft des Promptings"
+      "24-future-of-prompting": "Die Zukunft des Promptings",
+      "27-tools-mcp-connectors": "Werkzeuge, MCP und Konnektoren",
+      "26-the-harnesses": "Die Harnesses"
     },
     "chapterDescriptions": {
       "00a-preface": "Eine persönliche Notiz vom Autor",
@@ -1842,7 +1844,9 @@
       "21-business-productivity": "Professionelle und Arbeitsplatzanwendungen",
       "22-creative-arts": "Künstlerische und kreative Anwendungen",
       "23-research-analysis": "Datenanalyse und Forschungsaufgaben",
-      "24-future-of-prompting": "Aufkommende Trends und Ausblick"
+      "24-future-of-prompting": "Aufkommende Trends und Ausblick",
+      "27-tools-mcp-connectors": "Wie Werkzeuge, MCP und Konnektoren KI Zugriff auf Daten und Aktionen geben",
+      "26-the-harnesses": "Wie Harnesses Modelle, Prompts, Skills und Werkzeuge verbinden"
     },
     "interactive": {
       "tryIt": "Selbst Ausprobieren",

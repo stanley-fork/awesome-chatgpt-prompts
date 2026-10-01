@@ -1251,7 +1251,7 @@
     "interactiveBanner": {
       "badge": "インタラクティブ版が利用可能",
       "title": "より詳細でインタラクティブな体験をお求めですか？",
-      "description": "26章、実践的な演習、実例を含む包括的なインタラクティブガイドで、AIプロンプトをマスターしましょう。",
+      "description": "28章、実践的な演習、実例を含む包括的なインタラクティブガイドで、AIプロンプトをマスターしましょう。",
       "cta": "インタラクティブブックを読む"
     },
     "generalTips": {
@@ -1721,7 +1721,7 @@
     "donate": "プロジェクトを支援",
     "subtitle": "明確で効果的なプロンプトを作成するためのインタラクティブガイド",
     "metaTitle": "インタラクティブ・プロンプティングブック | AIプロンプトエンジニアリング無料オンラインガイド",
-    "metaDescription": "この無料インタラクティブガイドでAIプロンプトエンジニアリングをマスターしましょう。ChatGPTプロンプト、Chain-of-Thought推論、Few-Shot学習、高度なテクニックを学べます。実例付き25以上のチャプター。",
+    "metaDescription": "この無料インタラクティブガイドでAIプロンプトエンジニアリングをマスターしましょう。ChatGPTプロンプト、Chain-of-Thought推論、Few-Shot学習、高度なテクニックを学べます。実例付き28以上のチャプター。",
     "interactiveGuideBy": "インタラクティブガイド by",
     "authorIntro": "こんにちは、<author>Fatih Kadir Akın</author>です。GitHubで人気の<repoLink>Awesome ChatGPT Prompts</repoLink>リポジトリと<siteName>prompts.chat</siteName>のキュレーターです。",
     "bookDescription": "この包括的でインタラクティブなガイドでは、魅力的で効果的な会話を生み出す説得力のあるAIプロンプトを作成するための専門家の戦略を発見できます。AIモデルの仕組みの理解から、プロンプトチェーニングやエージェントシステムなどの高度なテクニックの習得まで、この本はAIインタラクションを次のレベルに引き上げるために必要なツールを提供します。",
@@ -1743,7 +1743,7 @@
       "part4": "パート4：ベストプラクティス",
       "part5": "パート5：ユースケース",
       "part6": "パート6：結論",
-      "chapters": "26のインタラクティブチャプター"
+      "chapters": "28のインタラクティブチャプター"
     },
     "startReading": "読み始める",
     "skipToChapter1": "第1章へ",
@@ -1811,7 +1811,9 @@
       "21-business-productivity": "ビジネスと生産性",
       "22-creative-arts": "クリエイティブアート",
       "23-research-analysis": "研究と分析",
-      "24-future-of-prompting": "プロンプティングの未来"
+      "24-future-of-prompting": "プロンプティングの未来",
+      "27-tools-mcp-connectors": "ツール、MCP、コネクター",
+      "26-the-harnesses": "ハーネス"
     },
     "chapterDescriptions": {
       "00a-preface": "著者からの個人的なメッセージ",
@@ -1842,7 +1844,9 @@
       "21-business-productivity": "プロフェッショナルと職場のアプリケーション",
       "22-creative-arts": "芸術的でクリエイティブなアプリケーション",
       "23-research-analysis": "データ分析と研究タスク",
-      "24-future-of-prompting": "新興トレンドと将来の展望"
+      "24-future-of-prompting": "新興トレンドと将来の展望",
+      "27-tools-mcp-connectors": "ツール、MCP、コネクターが AI にデータへのアクセスと操作を可能にする仕組み",
+      "26-the-harnesses": "ハーネスがモデル、プロンプト、スキル、ツールをつなぐ仕組み"
     },
     "interactive": {
       "tryIt": "自分で試す",

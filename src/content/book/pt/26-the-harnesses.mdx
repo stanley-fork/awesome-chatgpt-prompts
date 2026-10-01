@@ -1,0 +1,235 @@
+Você pede a uma IA para corrigir um bug. Ela lê o projeto, edita um arquivo, executa um teste, encontra uma falha e tenta de novo. O modelo faz parte desse processo. Mas algo também precisa abrir os arquivos, executar os comandos e devolver os resultados.
+
+Esse software ao redor do modelo é o **harness**. Depois de conhecer agentes e skills, vale olhar para o sistema que faz tudo isso funcionar em conjunto.
+
+## O que é um harness?
+
+Um **harness de agente** é o software que executa um agente de IA. Ele prepara o contexto do modelo, disponibiliza ferramentas, processa solicitações de uso das ferramentas e gerencia as etapas de uma tarefa. Dependendo da aplicação, também pode gerenciar permissões, progresso salvo, novas tentativas e limites.
+
+As pessoas às vezes usam *agente*, *framework* e *harness* de forma pouco precisa. Neste capítulo, usamos estas distinções:
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Parte</th>
+      <th scope="col">O que faz</th>
+      <th scope="col">Exemplo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Modelo</td>
+      <td>Produz uma resposta ou uma solicitação para usar uma ferramenta</td>
+      <td>Sugere ler um arquivo</td>
+    </tr>
+    <tr>
+      <td>Harness</td>
+      <td>Executa o processo ao redor do modelo</td>
+      <td>Verifica o acesso, lê o arquivo e devolve seu conteúdo</td>
+    </tr>
+    <tr>
+      <td>Agente</td>
+      <td>O sistema que busca um objetivo usando um modelo e um harness</td>
+      <td>Investiga e corrige um bug</td>
+    </tr>
+    <tr>
+      <td>Prompt</td>
+      <td>Dá instruções para a tarefa ou o comportamento</td>
+      <td>“Corrija este bug e informe quais testes você executou”</td>
+    </tr>
+    <tr>
+      <td>Skill</td>
+      <td>Reúne instruções reutilizáveis e recursos opcionais</td>
+      <td>Um procedimento para corrigir bugs com uma lista de verificações</td>
+    </tr>
+    <tr>
+      <td>Ferramenta</td>
+      <td>Realiza uma operação específica</td>
+      <td>Lê um arquivo ou executa um teste</td>
+    </tr>
+  </tbody>
+</table>
+
+Um harness pode ser um pequeno ciclo na sua aplicação ou parte de um assistente de programação maior. Ele não precisa incluir vários agentes ou um framework complicado. A Anthropic descreve essa distinção entre um agente e seu harness no seu [guia de avaliação de agentes](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents).
+
+<Callout type="info" title="Dois usos da mesma palavra">
+Um harness de agente executa o trabalho do agente. Um harness de avaliação executa tarefas de teste e mede o desempenho desse sistema. Eles podem trabalhar juntos, mas têm funções diferentes.
+</Callout>
+
+## Como o ciclo funciona
+
+Imagine que a tarefa seja melhorar uma página de busca sem resultados. Um ciclo típico funciona assim:
+
+1. **Preparar o contexto.** Incluir a solicitação, as instruções do projeto, as instruções das skills relevantes e as definições das ferramentas disponíveis.
+2. **Chamar o modelo.** Ele pode responder diretamente ou solicitar uma ferramenta, como a leitura do componente de busca.
+3. **Verificar e executar.** O harness valida a solicitação e verifica as permissões antes de executar a ferramenta.
+4. **Devolver a observação.** O conteúdo do arquivo, a saída do comando ou o erro voltam para o contexto do modelo.
+5. **Continuar ou parar.** O modelo usa essas evidências para o próximo passo. O harness também aplica limites e pode pausar para receber uma resposta do usuário.
+
+Escrever “execute os testes” em uma resposta não executa nada. Uma ferramenta real precisa executar o comando e devolver o resultado. Esse retorno permite que um agente reaja ao que realmente aconteceu. Veja a [explicação da Anthropic sobre fluxos de trabalho de agentes](https://www.anthropic.com/engineering/building-effective-agents).
+
+### Experimente a mesma tarefa com outra configuração
+
+Mude uma configuração e avance pela execução passo a passo. Observe o que muda no contexto, na solicitação de ferramenta e no relatório final.
+
+<HarnessDemo copy={{
+  title: "Dentro do harness",
+  description: "Uma simulação com roteiro predefinido. Nenhuma chamada de IA, operação em arquivos ou comando é executado aqui. Agentes reais podem seguir outros caminhos.",
+  taskLabel: "Tarefa",
+  task: "Corrija a página de busca sem resultados.",
+  modelLabel: "Modelo",
+  model: "O mesmo modelo em todas as execuções",
+  controlsLabel: "Mude a configuração",
+  resetHint: "Mudar uma configuração reinicia a execução. Uma skill ajuda com o método; ela não é necessária para todas as tarefas.",
+  traceLabel: "Registro de execução",
+  ready: "Pronto",
+  running: "Em execução",
+  complete: "Verificações concluídas",
+  unverified: "Não verificado",
+  start: "Iniciar o ciclo",
+  next: "Próximo passo",
+  reset: "Reiniciar",
+  controls: {
+    clearPrompt: { label: "Prompt claro", description: "Defina o comportamento esperado e as verificações que devem ser executadas." },
+    skill: { label: "Skill de correção de bugs", description: "Carregue um procedimento reutilizável para reproduzir e verificar o bug." },
+    tools: { label: "Acesso a ferramentas", description: "Permita ler e editar arquivos do projeto e executar testes." }
+  },
+  steps: {
+    context: {
+      title: "O harness prepara o contexto",
+      clearPrompt: "Mostre um estado vazio útil sem mudar o comportamento da busca. Execute os testes de busca e informe os resultados.",
+      vaguePrompt: "Corrija a página de busca sem resultados. O comportamento esperado e os critérios de aceitação não foram especificados.",
+      skillLoaded: "Skill carregada: reproduzir o problema, fazer uma pequena alteração e verificar resultados vazios e não vazios.",
+      skillMissing: "Nenhuma skill carregada. O modelo precisa escolher um método a partir da tarefa e das outras instruções."
+    },
+    request: {
+      title: "O modelo solicita uma ferramenta",
+      guided: "Seguindo a skill, o modelo solicita o componente de busca e seus testes para reproduzir o estado vazio.",
+      unguided: "O modelo solicita o componente de busca. Esta execução não inclui um procedimento reutilizável."
+    },
+    permission: {
+      title: "O harness verifica o acesso",
+      allowed: "As operações solicitadas no projeto são permitidas nesta simulação. O harness encaminha a chamada da ferramenta.",
+      blocked: "As ferramentas do projeto estão indisponíveis. Uma solicitação não pode ler ou alterar arquivos, e um prompt não pode conceder acesso."
+    },
+    observation: {
+      title: "Os resultados das ferramentas voltam ao modelo",
+      guided: "O componente e os testes mostram um estado vazio em branco. O modelo prepara uma pequena alteração e verifica resultados vazios e com dados.",
+      unguided: "O componente mostra um estado vazio em branco. O modelo prepara uma alteração usando as instruções que tem.",
+      unavailable: "Não há conteúdo de arquivos nem saídas de testes disponíveis. O modelo pode oferecer orientação ou pedir as informações que faltam."
+    },
+    review: {
+      title: "O ciclo verifica o trabalho",
+      checked: "Após a edição permitida, a ferramenta de testes retorna verificações de busca aprovadas. O modelo pode comparar essas evidências com o comportamento solicitado.",
+      unclear: "Uma alteração foi feita, mas esta execução não tem critérios de aceitação combinados. Uma mudança em um arquivo não demonstra, sozinha, que a tarefa foi concluída.",
+      unavailable: "O harness não tem evidências de execução. O modelo não deve informar uma alteração de arquivo nem testes aprovados."
+    },
+    finish: {
+      title: "A execução para e produz um relatório",
+      verified: "O relatório simulado lista a alteração e as verificações aprovadas. Essas verificações fornecem evidências, não uma garantia de que não restam bugs.",
+      unverified: "O relatório simulado explica o que ainda não foi verificado e o que é necessário a seguir. Ele não afirma que a correção foi confirmada."
+    }
+  }
+}} />
+
+Esses são exemplos de resultados, não regras sobre o que todo modelo fará. Um modelo pode fazer uma pergunta útil mesmo com um prompt vago. Instruções claras tornam suas expectativas mais fáceis de seguir e verificar.
+
+## Por que os prompts importam dentro de um harness
+
+Um harness dá ao modelo uma forma de agir. Seus prompts explicam quais ações são úteis. Sem um objetivo claro, um agente pode gastar muitas etapas fazendo um trabalho de que você não precisava.
+
+A solicitação atual é apenas uma parte das instruções. Uma aplicação também pode fornecer um prompt de sistema, orientações do projeto, descrições de ferramentas e instruções de uma skill carregada. O harness decide como esses elementos entram no contexto; o modelo segue a hierarquia de instruções usada por esse sistema.
+
+<Compare
+  before={{ label: "Tarefa pouco clara", content: "Corrija a busca. Deixe-a melhor." }}
+  after={{ label: "Uma tarefa que o agente pode verificar", content: "Quando a busca não encontrar correspondências, mostre um estado vazio útil. Mantenha o comportamento da busca sem alterações. Siga os padrões de interface existentes e use traduções para os novos textos. Execute os testes relevantes. Informe o que mudou, quais verificações passaram e tudo o que você não conseguiu verificar." }}
+/>
+
+Você não precisa descrever cada clique ou comando. Defina o resultado, as restrições relevantes e o que conta como concluído. Deixe o agente escolher etapas comuns quando essa flexibilidade ajudar.
+
+As descrições de ferramentas também fazem parte do prompting. Uma ferramenta com entradas, saídas e limites claros é mais fácil de usar corretamente pelo modelo. Adicionar mais ferramentas sem explicá-las pode criar confusão.
+
+## Onde as skills entram
+
+Um prompt geralmente descreve a tarefa atual. Uma **skill** registra um método que você quer reutilizar em várias tarefas: como revisar uma alteração, investigar um bug ou preparar um relatório.
+
+No [formato Agent Skills](https://agentskills.io/specification), uma skill tem um arquivo `SKILL.md` e pode incluir scripts, referências e recursos. Um harness compatível permite descobrir skills. Ele pode fornecer primeiro seus nomes e descrições, carregar as instruções da skill selecionada quando forem relevantes e ler os arquivos de apoio apenas quando necessário. Isso é chamado de **divulgação progressiva**.
+
+<Collapsible title="Abra uma pequena skill de correção de bugs">
+
+```markdown
+---
+name: verify-bug-fix
+description: Use ao corrigir um bug reproduzível em um projeto existente.
+---
+
+1. Leia as instruções do projeto e o código relevante.
+2. Reproduza o comportamento relatado ou explique por que não consegue.
+3. Faça a menor alteração que resolva a causa.
+4. Execute as verificações relevantes, incluindo um caso próximo que deve continuar funcionando.
+5. Relate a alteração, as evidências e as incertezas restantes.
+
+Se uma ferramenta necessária estiver indisponível, explique a limitação.
+Não descreva uma verificação que não foi executada como aprovada.
+```
+
+</Collapsible>
+
+O harness ainda precisa das ferramentas e do ambiente que a skill espera. Uma skill que descreve um teste no navegador não instala um navegador. Um script pode precisar de dependências. As instruções podem precisar de alterações ao serem levadas para outro harness com ferramentas diferentes. Carregar uma skill também não treina o modelo nem garante conhecimento especializado.
+
+Use o prompt da tarefa para o que é específico de hoje. Coloque um procedimento repetido em uma skill. Mantenha as regras compartilhadas do projeto nos arquivos de instruções que seu harness suporta. Isso evita copiar uma lista longa e um pouco diferente em cada solicitação.
+
+<Quiz
+  question="Uma skill diz para executar testes no navegador, mas o harness não tem ferramenta de navegador. O que deve acontecer?"
+  options={[
+    "A skill cria automaticamente o acesso ao navegador",
+    "O agente deve informar a limitação e usar uma alternativa disponível ou pedir o que precisa",
+    "O agente pode marcar os testes como aprovados depois de ler o código",
+    "Um prompt mais longo tornará o navegador disponível"
+  ]}
+  correctIndex={1}
+  explanation="Uma skill fornece instruções e possivelmente recursos. O harness e o ambiente fornecem as capacidades reais. A falta de evidências de execução deve continuar visível."
+/>
+
+## Instruções e permissões têm funções diferentes
+
+“Não edite arquivos fora deste projeto” é uma instrução útil. Um limite do sistema de arquivos que bloqueia essas gravações é um controle aplicado pelo sistema. Configurações confiáveis usam os dois.
+
+Permissões, isolamento e verificações de aprovação precisam ser implementados pelo harness, suas ferramentas ou pelo ambiente subjacente. Um prompt não pode impor esses controles sozinho. A [documentação de segurança de agentes do VS Code](https://code.visualstudio.com/docs/agents/run/security) mostra exemplos concretos desses controles.
+
+A mesma distinção importa para as informações que voltam das ferramentas. Uma página web ou um arquivo do repositório pode conter texto que parece uma instrução. Trate esse texto como dados da tarefa, a menos que venha de uma fonte de instruções confiável. Limite o acesso ao que o trabalho precisa.
+
+<Quiz
+  question="Qual controle realmente impede uma ferramenta de gravar fora de um diretório permitido?"
+  options={[
+    "Repetir a restrição em letras maiúsculas",
+    "Dar ao agente uma personalidade cuidadosa",
+    "Aplicar o limite do diretório na ferramenta ou no ambiente de execução",
+    "Adicionar mais exemplos à skill"
+  ]}
+  correctIndex={2}
+  explanation="Prompts orientam o comportamento. A ferramenta ou o ambiente precisa aplicar o limite de acesso mesmo que o modelo solicite uma ação não permitida."
+/>
+
+## O que torna um harness útil?
+
+Mais autonomia só é útil quando o sistema consegue verificar seu trabalho e se recuperar de problemas. Para uma tarefa longa, observe como o harness lida com estes pontos:
+
+- **Contexto:** Manter disponíveis as instruções e evidências relevantes. Resumir etapas anteriores pode economizar espaço, mas também perder detalhes.
+- **Progresso:** Salvar decisões e trabalho incompleto para que a próxima sessão possa continuar. O estado salvo ainda precisa ser carregado no contexto.
+- **Falhas:** Devolver erros com clareza, limitar as novas tentativas e evitar repetir às cegas ações com efeitos colaterais.
+- **Limites:** Parar ao atingir um limite de tempo, custo ou etapas, ou quando o trabalho precisar de uma resposta do usuário. Parar não é prova de sucesso.
+- **Verificação:** Inspecionar os arquivos reais, os resultados dos testes ou outros resultados. Uma mensagem final confiante não é suficiente.
+
+Ao comparar configurações, experimente as mesmas tarefas reais e inspecione tanto os resultados quanto os registros de execução. Mantenha o mesmo modelo quando quiser estudar uma mudança no harness. Mude um prompt, uma skill ou uma configuração de ferramenta por vez, e repita as tarefas porque as execuções variam.
+
+<InteractiveChecklist
+  title="Experimente em uma tarefa que você já faz"
+  items={[
+    { id: "outcome", label: "Escreva o resultado esperado e como você vai verificá-lo" },
+    { id: "tools", label: "Escolha as ferramentas e os acessos de que a tarefa precisa" },
+    { id: "skill", label: "Transfira um procedimento repetido para uma pequena skill" },
+    { id: "limits", label: "Decida o que acontece quando uma ferramenta falha ou um limite é atingido" },
+    { id: "evidence", label: "Execute a tarefa e compare o relatório com as evidências reais" }
+  ]}
+/>

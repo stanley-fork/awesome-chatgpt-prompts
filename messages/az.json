@@ -1251,7 +1251,7 @@
     "interactiveBanner": {
       "badge": "İnteraktiv Versiya Mövcuddur",
       "title": "Daha Ətraflı və İnteraktiv Təcrübə İstəyirsiniz?",
-      "description": "26 fəsil, praktiki təmrinlər və real dünya nümunələri ilə hərtarafəli interaktiv rəhbərimizlə AI prompt yazmağı mənimsaəyin.",
+      "description": "28 fəsil, praktiki təmrinlər və real dünya nümunələri ilə hərtarafəli interaktiv rəhbərimizlə AI prompt yazmağı mənimsaəyin.",
       "cta": "İnteraktiv Kitabı Oxuyun"
     },
     "generalTips": {
@@ -1721,7 +1721,7 @@
     "donate": "Layihəni dəstəkləyin",
     "subtitle": "Aydın və Effektiv Promptlar Yaratmaq üçün İnteraktiv Bələdçi",
     "metaTitle": "İnteraktiv Prompting Kitabı | AI Prompt Mühəndisliyi üçün Pulsuz Onlayn Bələdçi",
-    "metaDescription": "Bu pulsuz, interaktiv bələdçi ilə AI prompt mühəndisliyini mənimsəyin. ChatGPT promptları, düşüncə zənciri, az nümunə ilə öyrənmə və qabaqcıl texnikaları öyrənin. Real nümunələrlə 25+ fəsil.",
+    "metaDescription": "Bu pulsuz, interaktiv bələdçi ilə AI prompt mühəndisliyini mənimsəyin. ChatGPT promptları, düşüncə zənciri, az nümunə ilə öyrənmə və qabaqcıl texnikaları öyrənin. Real nümunələrlə 28+ fəsil.",
     "interactiveGuideBy": "İnteraktiv Bələdçi",
     "authorIntro": "Salam, mən <author>Fatih Kadir Akın</author>-am, GitHub-da populyar <repoLink>Awesome ChatGPT Prompts</repoLink> deposunun və <siteName>prompts.chat</siteName> saytının yaradıcısıyam.",
     "bookDescription": "Bu hərtərəfli və interaktiv bələdçidə, cəlbedici və effektiv söhbətlər aparan AI promptları yaratmaq üçün ekspert strategiyaları kəşf edəcəksiniz. AI modellərinin necə işlədiyini anlamaqdan prompt zəncirləmə və agent sistemləri kimi qabaqcıl texnikalara qədər, bu kitab AI qarşılıqlı əlaqələrinizi növbəti səviyyəyə çatdırmaq üçün lazım olan alətləri təqdim edir.",
@@ -1743,7 +1743,7 @@
       "part4": "Hissə 4: Ən Yaxşı Təcrübələr",
       "part5": "Hissə 5: İstifadə Halları",
       "part6": "Hissə 6: Nəticə",
-      "chapters": "26 İnteraktiv Fəsil"
+      "chapters": "28 İnteraktiv Fəsil"
     },
     "startReading": "Oxumağa Başla",
     "skipToChapter1": "1-ci Fəsilə Keç",
@@ -1811,7 +1811,9 @@
       "21-business-productivity": "Biznes və Məhsuldarlıq",
       "22-creative-arts": "Yaradıcı Sənətlər",
       "23-research-analysis": "Araşdırma və Analiz",
-      "24-future-of-prompting": "Promptinqin Gələcəyi"
+      "24-future-of-prompting": "Promptinqin Gələcəyi",
+      "27-tools-mcp-connectors": "Alətlər, MCP və konnektorlar",
+      "26-the-harnesses": "Harness-lər"
     },
     "chapterDescriptions": {
       "00a-preface": "Müəllifdən şəxsi qeyd",
@@ -1842,7 +1844,9 @@
       "21-business-productivity": "Peşəkar və iş yeri tətbiqləri",
       "22-creative-arts": "Bədii və yaradıcı tətbiqlər",
       "23-research-analysis": "Məlumat analizi və araşdırma tapşırıqları",
-      "24-future-of-prompting": "Yüksələn tendensiyalar və gələcəyə baxış"
+      "24-future-of-prompting": "Yüksələn tendensiyalar və gələcəyə baxış",
+      "27-tools-mcp-connectors": "Alətlər, MCP və konnektorlar AI-a məlumatlara çıxış və əməliyyat imkanı necə verir",
+      "26-the-harnesses": "Harness-lər modelləri, promptları, bacarıqları və alətləri necə birləşdirir"
     },
     "interactive": {
       "tryIt": "Özünüz Sınayın",

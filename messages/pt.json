@@ -1251,7 +1251,7 @@
     "interactiveBanner": {
       "badge": "Versão Interativa Disponível",
       "title": "Quer uma Experiência Mais Detalhada e Interativa?",
-      "description": "Aprofunde-se com nosso guia interativo completo com 26 capítulos, exercícios práticos e exemplos do mundo real para dominar prompts de IA.",
+      "description": "Aprofunde-se com nosso guia interativo completo com 28 capítulos, exercícios práticos e exemplos do mundo real para dominar prompts de IA.",
       "cta": "Ler o Livro Interativo"
     },
     "generalTips": {
@@ -1721,7 +1721,7 @@
     "donate": "Apoie o projeto",
     "subtitle": "Um Guia Interativo para Criar Prompts Claros e Eficazes",
     "metaTitle": "O Livro Interativo de Prompting | Guia Gratuito Online de Engenharia de Prompts IA",
-    "metaDescription": "Domine a engenharia de prompts IA com este guia interativo gratuito. Aprenda prompts do ChatGPT, raciocínio chain-of-thought, few-shot learning e técnicas avançadas. 25+ capítulos com exemplos reais.",
+    "metaDescription": "Domine a engenharia de prompts IA com este guia interativo gratuito. Aprenda prompts do ChatGPT, raciocínio chain-of-thought, few-shot learning e técnicas avançadas. 28+ capítulos com exemplos reais.",
     "interactiveGuideBy": "Um Guia Interativo de",
     "authorIntro": "Olá, sou <author>Fatih Kadir Akın</author>, o curador do popular repositório <repoLink>Awesome ChatGPT Prompts</repoLink> no GitHub e do <siteName>prompts.chat</siteName>.",
     "bookDescription": "Neste guia completo e interativo, você descobrirá estratégias especializadas para criar prompts de IA convincentes que geram conversações envolventes e eficazes. Desde entender como os modelos de IA funcionam até dominar técnicas avançadas como prompt chaining e sistemas agênticos, este livro fornece as ferramentas que você precisa para levar suas interações com IA ao próximo nível.",
@@ -1743,7 +1743,7 @@
       "part4": "Parte 4: Melhores Práticas",
       "part5": "Parte 5: Casos de Uso",
       "part6": "Parte 6: Conclusão",
-      "chapters": "26 Capítulos Interativos"
+      "chapters": "28 Capítulos Interativos"
     },
     "startReading": "Começar a Ler",
     "skipToChapter1": "Ir para o Capítulo 1",
@@ -1811,7 +1811,9 @@
       "21-business-productivity": "Negócios e Produtividade",
       "22-creative-arts": "Artes Criativas",
       "23-research-analysis": "Pesquisa e Análise",
-      "24-future-of-prompting": "O Futuro do Prompting"
+      "24-future-of-prompting": "O Futuro do Prompting",
+      "27-tools-mcp-connectors": "Ferramentas, MCP e conectores",
+      "26-the-harnesses": "Os harnesses"
     },
     "chapterDescriptions": {
       "00a-preface": "Uma nota pessoal do autor",
@@ -1842,7 +1844,9 @@
       "21-business-productivity": "Aplicações profissionais e de trabalho",
       "22-creative-arts": "Aplicações artísticas e criativas",
       "23-research-analysis": "Análise de dados e tarefas de pesquisa",
-      "24-future-of-prompting": "Tendências emergentes e perspectivas futuras"
+      "24-future-of-prompting": "Tendências emergentes e perspectivas futuras",
+      "27-tools-mcp-connectors": "Como ferramentas, MCP e conectores dão à IA acesso a dados e ações",
+      "26-the-harnesses": "Como os harnesses conectam modelos, prompts, habilidades e ferramentas"
     },
     "interactive": {
       "tryIt": "Experimente Você Mesmo",

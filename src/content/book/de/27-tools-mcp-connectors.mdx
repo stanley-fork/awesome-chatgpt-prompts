@@ -1,0 +1,209 @@
+Du bittest einen Agent, die offenen Bugs in deinem Projekt zu finden und ein Folge-Issue zu entwerfen. Dafür braucht er mehr als gute Anweisungen. Er muss dein Ticketsystem erreichen, die richtigen Daten lesen und dort vielleicht etwas erstellen können.
+
+Hier kommen **Werkzeuge**, **Konnektoren** und **MCP** ins Spiel. Sie hängen zusammen, beschreiben aber verschiedene Teile des Systems.
+
+## Werkzeuge, APIs, Konnektoren und MCP
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Begriff</th>
+      <th scope="col">Bedeutung</th>
+      <th scope="col">Beispiel im Ticketsystem</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Werkzeug</td>
+      <td>Ein bestimmter Vorgang, den der Agent nutzen kann</td>
+      <td>Issues suchen oder ein Issue erstellen</td>
+    </tr>
+    <tr>
+      <td>API</td>
+      <td>Eine Schnittstelle, über die Software mit einem anderen System kommunizieren kann</td>
+      <td>Die Endpunkte des Ticketsystems zum Lesen und Schreiben von Issues</td>
+    </tr>
+    <tr>
+      <td>Konnektor</td>
+      <td>Eine Integration, die die KI-Anwendung mit einem Dienst oder einer Datenquelle verbindet</td>
+      <td>Die Integration des Ticketsystems mit ihrer Kontoverbindung und den unterstützten Aktionen</td>
+    </tr>
+    <tr>
+      <td>MCP</td>
+      <td>Ein Protokoll zum Austausch von Kontext und zur Bereitstellung von Funktionen für KI-Anwendungen</td>
+      <td>Ein gemeinsamer Weg, die Werkzeuge des Ticketsystems zu finden und aufzurufen</td>
+    </tr>
+  </tbody>
+</table>
+
+Ein Werkzeug kann auch lokal arbeiten. Ein Taschenrechner braucht keine Kontoverbindung. Ein Werkzeug zum Lesen von Dateien kann vollständig auf deinem Computer laufen. Ein externer Dienst ist nur eine mögliche Quelle für Werkzeuge.
+
+## Was ein Werkzeug tatsächlich enthält
+
+Ein Werkzeug hat meistens einen **Namen**, eine **Beschreibung**, ein **Eingabeschema** und eine Implementierung, die die Arbeit ausführt. Die Beschreibung hilft dem Modell zu entscheiden, wann es das Werkzeug nutzen soll. Das Schema beschreibt die erlaubten Argumente.
+
+Hier ist eine kleine, erfundene MCP-Werkzeugdefinition:
+
+<Collapsible title="Die Definition von search_issues ansehen">
+
+```json
+{
+  "name": "search_issues",
+  "description": "Suche Issues im verbundenen Projekt. Dieses Werkzeug liest nur Daten.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string" },
+      "limit": { "type": "integer", "minimum": 1, "maximum": 20 }
+    },
+    "required": ["query"],
+    "additionalProperties": false
+  }
+}
+```
+
+</Collapsible>
+
+Das Modell könnte `search_issues` mit `{"query": "offene Bugs", "limit": 3}` anfordern. Die umgebende Anwendung leitet diese Anfrage an die Implementierung weiter. Diese fragt das Ticketsystem ab und gibt Ergebnisse oder einen Fehler zurück.
+
+Name und Schema führen selbst nichts aus. Die Implementierung muss Eingaben validieren, den Zugriff prüfen und den tatsächlichen Vorgang ausführen. Die Werkzeugantwort ist außerdem von der abschließenden Antwort des Modells getrennt: Sie kann Issue-IDs und Titel enthalten, die das Modell anschließend zusammenfasst. Die [MCP-Werkzeugspezifikation](https://modelcontextprotocol.io/specification/latest/server/tools) beschreibt, wie Werkzeuge diese Vorgänge bereitstellen.
+
+<Callout type="info" title="Eine Anfrage ist kein Ergebnis">
+„Ich werde ein Issue erstellen“ ist eine Aussage. Ein Werkzeugaufruf fordert den Vorgang an. Eine erfolgreiche Antwort mit der ID des neuen Issues belegt, dass er stattgefunden hat. Halte diese drei Dinge auseinander.
+</Callout>
+
+## Was ein Konnektor ergänzt
+
+Ein Konnektor bündelt die Integration mit einem bestimmten System. Er kann Anmeldung, Konto- oder Arbeitsbereichsauswahl, Datensuche und die Bereitstellung unterstützter Aktionen als Werkzeuge übernehmen. Einige Konnektoren können nur suchen oder lesen. Andere unterstützen auch Schreibzugriffe.
+
+**Konnektor ist ein Produktbegriff, kein einheitlicher technischer Standard.** Ein Konnektor ruft vielleicht direkt die API eines Dienstes auf. Ein anderer nutzt einen MCP-Server. Ein dritter durchsucht einen Index aus synchronisierten Dokumenten. Prüfe, was die jeweilige Integration unterstützt. Microsofts [Übersicht zu Konnektoren](https://learn.microsoft.com/en-us/azure/connectors/introduction) zeigt ein Beispiel für Integrationen auf Basis von APIs.
+
+Ein verbundenes Konto bedeutet nicht, dass der Agent jede Datei sieht, alle deine Daten in seinen Kontext lädt oder jede Aktion ausführen darf. Der Zugriff hängt vom Konto, den konfigurierten Berechtigungsbereichen, der Anwendung und den Berechtigungen des Dienstes ab. Suchergebnisse können außerdem aus einem Index stammen, der älter als die Originaldokumente ist.
+
+Halte beim Ticketsystem diese Fragen auseinander: Ist eine Verbindung eingerichtet? Auf welches Projekt kann sie zugreifen? Kann sie nur lesen oder auch Issues erstellen?
+
+## Was MCP standardisiert
+
+**MCP** steht für **Model Context Protocol**. Es definiert einen gemeinsamen Kommunikationsweg für KI-Anwendungen und externe Funktionsanbieter. Es ersetzt nicht die API eines Dienstes; ein MCP-Server kann diese API im Hintergrund nutzen.
+
+Die [MCP-Architektur](https://modelcontextprotocol.io/docs/learn/architecture) hat drei zentrale Rollen:
+
+<InfoGrid columns={3} items={[
+  { label: "Host", description: "Die KI-Anwendung, in der der Nutzer arbeitet. Sie koordiniert Verbindungen, Modellinteraktionen und Berechtigungen.", color: "blue" },
+  { label: "Client", description: "Der Teil im Host, der eine Verbindung zu einem MCP-Server aufrechterhält.", color: "green" },
+  { label: "Server", description: "Ein Programm, das Werkzeuge, Ressourcen oder Prompts über MCP bereitstellt. Es kann lokal oder entfernt laufen.", color: "amber" }
+]} />
+
+Für einen Werkzeugaufruf kann der Client die Werkzeuge des Servers mit `tools/list` abfragen. Die Anwendung stellt dem Modell relevante Werkzeugdefinitionen bereit. Wenn das Modell eines davon anfordert, kann die Anwendung über ihren MCP-Client eine `tools/call`-Anfrage senden. Der Server führt den Vorgang aus oder delegiert ihn und gibt das Ergebnis zurück.
+
+Das Modell muss nicht selbst eine Netzwerkverbindung öffnen. Die Anwendung und die MCP-Implementierung übernehmen die Kommunikation. Kompatibilität bleibt wichtig: Host und Server müssen die Funktionen unterstützen, die du nutzen möchtest. Ein gefundenes Werkzeug bedeutet nicht automatisch, dass du es ausführen darfst; Zugriffsprüfungen gelten weiterhin.
+
+### MCP bietet mehr als Werkzeuge
+
+MCP definiert auch **Ressourcen** und **Prompts**. Diese Wörter haben im Protokoll bestimmte Bedeutungen:
+
+<InfoGrid columns={3} items={[
+  { label: "Werkzeuge", description: "Vorgänge, die das Modell unter den Kontrollen der Anwendung anfordern kann. Beispiel: Issues suchen.", color: "blue" },
+  { label: "Ressourcen", description: "Daten, die die Anwendung als Kontext bereitstellen kann. Beispiel: ein Projektleitfaden mit einer URI.", color: "green" },
+  { label: "Prompts", description: "Wiederverwendbare Nachrichtenvorlagen, die Nutzer auswählen können, mit optionalen Argumenten. Beispiel: einen Bericht zur Issue-Sichtung vorbereiten.", color: "amber" }
+]} />
+
+Der [Leitfaden zu MCP-Serverkonzepten](https://modelcontextprotocol.io/docs/learn/server-concepts) beschreibt sie als modellgesteuerte Werkzeuge, anwendungsgesteuerte Ressourcen und nutzergesteuerte Prompts. Diese Begriffe beschreiben die vorgesehenen Interaktionsmuster. Sie heben die Berechtigungsprüfungen der Anwendung nicht auf.
+
+Eine MCP-Promptvorlage ist nicht automatisch ein Skill. Ein Skill kann einen längeren Ablauf, Referenzen und Skripte bündeln. Er kann dem Agent erklären, wie er Werkzeuge über MCP, einen direkten Konnektor oder lokale Funktionen nutzt.
+
+## Lesen und Schreiben ausprobieren
+
+Dieses Beispiel nutzt dasselbe erfundene Ticketsystem über zwei Wege. Ändere den Weg, den Vorgang oder die Zugriffsstufe und führe dann die Anfrage aus. Probiere beim Schreiben sowohl das Genehmigen als auch das Ablehnen aus.
+
+<ToolsDemo copy={{
+  title: "Eine Werkzeuganfrage verfolgen",
+  description: "Eine vorgegebene Simulation mit einem erfundenen Ticketsystem. Es werden keine Konten verbunden und keine echten Issues gelesen oder erstellt. Verbundene Modi nutzen dasselbe Beispielkonto.",
+  routeLabel: "Integrationsweg",
+  directLabel: "Direkte API",
+  mcpLabel: "MCP",
+  toolLabel: "Vorgang",
+  readLabel: "Issues suchen",
+  writeLabel: "Ein Issue erstellen",
+  accessLabel: "Verbindungszugriff",
+  disconnectedLabel: "Nicht verbunden",
+  readOnlyLabel: "Verbunden: nur lesen",
+  readWriteLabel: "Verbunden: lesen und schreiben",
+  appLabel: "KI-Anwendung",
+  hostLabel: "KI-Anwendung + MCP-Client",
+  connectorLabel: "Direkter API-Konnektor",
+  serverLabel: "MCP-Server des Ticketsystems",
+  serviceLabel: "Ticketsystem-Dienst",
+  requestLabel: "Werkzeuganfrage",
+  resultLabel: "Ergebnis",
+  run: "Anfrage ausführen",
+  reset: "Zurücksetzen",
+  approve: "Erstellung genehmigen",
+  decline: "Ablehnen",
+  query: "offene Bugs",
+  issueTitle: "Hilfreichen Zustand für leere Suchergebnisse ergänzen",
+  policyNote: "Der Weg ändert, wie die Anfrage übertragen wird, nicht ihre Zugriffsrechte. Diese Beispielanwendung verlangt vor dem Erstellen eines Issues eine Genehmigung. Das ist eine Anwendungsregel, keine allgemeine MCP-Regel. Eine geänderte Einstellung setzt das Ergebnis zurück.",
+  states: {
+    ready: "Wähle Einstellungen und führe die Anfrage aus. Bisher wurde kein Vorgang ausgeführt.",
+    disconnected: "Es ist keine Verbindung eingerichtet. Die Anwendung kann die Issues dieses Projekts nicht erreichen. MCP auszuwählen verbindet kein Konto und gewährt keinen Zugriff.",
+    denied: "Diese Verbindung kann nur lesen. Das Erstellen eines Issues wird vor der Ausführung blockiert. Eine Genehmigung dieser einzelnen Anfrage würde keine Schreibberechtigung hinzufügen.",
+    read: "Die simulierte Suche liefert BUG-42: Die Suchseite bleibt leer, wenn es keine Treffer gibt. Die Anwendung kann diesen Nachweis jetzt an das Modell weitergeben. Kein Issue wurde geändert.",
+    approval: "Schreibzugriff ist vorhanden, aber diese Anwendung verlangt deine Genehmigung für diese Aktion. Prüfe den Titel in der Anfrage. Es wurde noch nichts erstellt.",
+    created: "Der simulierte Dienst bestätigt die Erstellung von FOLLOWUP-108 mit dem angeforderten Titel. Das Modell kann diese ID als Nachweis für das Ergebnis nennen.",
+    declined: "Die Erstellung wurde abgelehnt. Die Anwendung hat den Schreibvorgang nicht an den Dienst gesendet und kein neues Issue wurde erstellt."
+  }
+}} />
+
+Die Lese- und Schreibmodi hier gehören zu unserer Beispielintegration. Echte Berechtigungen können genauer abgestuft sein. MCP gibt beiden Seiten ein gemeinsames Protokoll. Es entscheidet nicht, ob dein Konto ins Projekt schreiben darf oder ob die Anwendung vorher fragen sollte. **Authentifizierung** stellt die Identität fest; **Autorisierung** bestimmt den erlaubten Zugriff. Eine separate Genehmigung kann eine bestimmte Aktion bestätigen. Entfernte HTTP-Integrationen können das [MCP-Autorisierungsframework](https://modelcontextprotocol.io/specification/latest/basic/authorization) nutzen; die Details hängen von der Integration ab.
+
+<Quiz
+  question="Eine verbundene MCP-Integration hat nur Lesezugriff. Kann der Agent durch einen genaueren Prompt ein Issue erstellen?"
+  options={[
+    "Ja, weil MCP jeden vom Modell angeforderten Vorgang erlaubt",
+    "Ja, wenn der Nutzer diese einzelne Anfrage genehmigt",
+    "Nein. Die Integration braucht autorisierten Schreibzugriff, bevor sie schreiben kann",
+    "Ja, wenn ein Skill den Werkzeugnamen create_issue enthält"
+  ]}
+  correctIndex={2}
+  explanation="Ein Prompt, Skill oder eine Aktionsgenehmigung erweitert die Zugriffsrechte der Verbindung nicht. Anwendung und Dienst müssen den Schreibzugriff erlauben."
+/>
+
+## Prompts für einen Agent mit Werkzeugen
+
+Sage dem Agent, welche Informationen er suchen soll, wie er sie nutzen soll und welche Aktionen du erwartest. Gehe nicht einfach davon aus, dass eine Verbindung besteht oder ein Werkzeug jeden Vorgang des Dienstes unterstützt.
+
+<Compare
+  before={{ label: "Zu viel bleibt offen", content: "Schau dir die Bugs an und bring alles in Ordnung." }}
+  after={{ label: "Klares Ergebnis und klare Grenzen", content: "Suche im verbundenen Projekt nach offenen Bugs zu leeren Suchergebnissen. Fasse die relevanten Issues mit ihren IDs zusammen. Entwirf bei Bedarf ein Folge-Issue, frage aber vor dem Erstellen nach. Falls die Verbindung oder das benötigte Werkzeug nicht verfügbar ist, erkläre, was fehlt. Behaupte nicht, ein Issue erstellt zu haben, solange kein erfolgreiches Werkzeugergebnis vorliegt." }}
+/>
+
+Ein wiederverwendbarer Skill zur Issue-Sichtung könnte die Methode ergänzen: Duplikate suchen, Reproduktionsschritte vergleichen, die Issue-Vorlage des Projekts befolgen und offene Fragen melden. Das Werkzeug stellt den Vorgang bereit. Der Skill erklärt, wie man ihn sinnvoll nutzt.
+
+Werkzeugausgaben müssen weiterhin beurteilt werden. Ein Issue-Kommentar, ein Dokument oder ein Suchergebnis kann Fehler oder Text enthalten, der wie eine Anweisung aussieht. Behandle abgerufene Inhalte als Daten, statt ihnen zu erlauben, die Nutzeranfrage oder die Anwendungsregeln zu verändern. MCP-Unterstützung allein macht einen Server oder seine Inhalte nicht vertrauenswürdig.
+
+Wenn ein Lesevorgang fehlschlägt, kann der Agent den Fehler melden oder eine sinnvolle Alternative versuchen. Läuft ein Schreibvorgang in ein Zeitlimit, sollte er vor einer Wiederholung prüfen, ob die Änderung stattgefunden hat. Sonst könnte ein erneuter Versuch ein doppeltes Issue erstellen. Zugangsdaten gehören in die Verbindungseinstellungen der Integration, nicht in den Aufgaben-Prompt.
+
+<Quiz
+  question="Wie können ein Konnektor, MCP und ein Werkzeug zusammenarbeiten?"
+  options={[
+    "Es sind drei Namen für dieselbe Sache",
+    "Ein Konnektor kann MCP nutzen, um einen Dienstvorgang als Werkzeug bereitzustellen",
+    "MCP ersetzt den Dienst und speichert alle seine Daten im Modell",
+    "Ein Skill muss für jeden Werkzeugaufruf die Netzwerkverbindung herstellen"
+  ]}
+  correctIndex={1}
+  explanation="Ein Konnektor ist die Integration, MCP kann ihr Kommunikationsprotokoll sein und ein Werkzeug ist ein bestimmter Vorgang. Eine direkte API-Integration kann auch ohne MCP Werkzeuge bereitstellen."
+/>
+
+<InteractiveChecklist
+  title="Vor der Nutzung einer neuen Integration"
+  items={[
+    { id: "source", label: "Bestimme den Dienst, das Projekt oder die Dateien, die die Aufgabe braucht" },
+    { id: "capabilities", label: "Prüfe, welche Werkzeuge und Vorgänge die Integration tatsächlich bereitstellt" },
+    { id: "access", label: "Prüfe die verbundene Identität und ihren Lese- oder Schreibzugriff" },
+    { id: "approval", label: "Lege fest, welche Aktionen auf eine Genehmigung warten sollen" },
+    { id: "evidence", label: "Prüfe die zurückgegebenen Nachweise, bevor du Erfolg meldest" }
+  ]}
+/>
+
+Das nächste Kapitel, [Die Harnesses](/book/26-the-harnesses), betrachtet die Software, die diese Verbindungen, Anweisungen und Werkzeugergebnisse während einer ganzen Aufgabe koordiniert.

@@ -1,0 +1,209 @@
+Vous demandez à un agent de trouver les bugs ouverts dans votre projet et de rédiger un ticket de suivi. Pour cela, de bonnes instructions ne suffisent pas. Il lui faut un moyen d'accéder à votre outil de suivi, de lire les bonnes données et, éventuellement, d'y créer quelque chose.
+
+C'est là qu'interviennent les **outils**, les **connecteurs** et **MCP**. Ils sont liés, mais décrivent des parties différentes de la configuration.
+
+## Outils, API, connecteurs et MCP
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Terme</th>
+      <th scope="col">Signification</th>
+      <th scope="col">Exemple avec un outil de suivi</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Outil</td>
+      <td>Une opération précise accessible à l'agent</td>
+      <td>Rechercher des tickets ou créer un ticket</td>
+    </tr>
+    <tr>
+      <td>API</td>
+      <td>Une interface permettant à un logiciel de communiquer avec un autre système</td>
+      <td>Les points d'accès du système de suivi pour lire et écrire des tickets</td>
+    </tr>
+    <tr>
+      <td>Connecteur</td>
+      <td>Une intégration qui relie l'application IA à un service ou à une source de données</td>
+      <td>L'intégration du système de suivi, avec sa connexion au compte et ses actions disponibles</td>
+    </tr>
+    <tr>
+      <td>MCP</td>
+      <td>Un protocole pour échanger du contexte et rendre des capacités accessibles aux applications IA</td>
+      <td>Une méthode commune pour découvrir les outils du système de suivi et les appeler</td>
+    </tr>
+  </tbody>
+</table>
+
+Un outil peut aussi fonctionner localement. Une calculatrice n'a pas besoin d'une connexion à un compte. Un outil de lecture de fichiers peut fonctionner entièrement sur votre ordinateur. Un service externe n'est qu'une source possible d'outils.
+
+## Ce que contient réellement un outil
+
+Un outil possède généralement un **nom**, une **description**, un **schéma d'entrée** et une implémentation qui effectue le travail. La description aide le modèle à décider quand l'utiliser. Le schéma décrit les arguments qu'il accepte.
+
+Voici une petite définition fictive d'outil MCP :
+
+<Collapsible title="Examiner la définition de search_issues">
+
+```json
+{
+  "name": "search_issues",
+  "description": "Rechercher des tickets dans le projet connecté. Cet outil lit uniquement des données.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string" },
+      "limit": { "type": "integer", "minimum": 1, "maximum": 20 }
+    },
+    "required": ["query"],
+    "additionalProperties": false
+  }
+}
+```
+
+</Collapsible>
+
+Le modèle pourrait demander `search_issues` avec `{"query": "bugs ouverts", "limit": 3}`. L'application transmet cette demande à l'implémentation. Celle-ci interroge le système de suivi et renvoie des résultats ou une erreur.
+
+Le nom et le schéma n'exécutent rien par eux-mêmes. L'implémentation doit valider les entrées, vérifier l'accès et effectuer l'opération. La réponse d'un outil est aussi distincte de la réponse finale du modèle : elle peut contenir des identifiants et des titres de tickets que le modèle résume ensuite. La [spécification des outils MCP](https://modelcontextprotocol.io/specification/latest/server/tools) décrit comment les outils rendent ces opérations accessibles.
+
+<Callout type="info" title="Une demande n'est pas un résultat">
+« Je vais créer un ticket » est une déclaration. Un appel d'outil demande l'opération. Une réponse réussie avec l'identifiant du nouveau ticket prouve qu'elle a eu lieu. Gardez ces trois choses distinctes.
+</Callout>
+
+## Ce qu'ajoute un connecteur
+
+Un connecteur regroupe l'intégration avec un système particulier. Il peut gérer la connexion, le choix d'un compte ou d'un espace de travail, la recherche de données et la présentation des actions disponibles sous forme d'outils. Certains connecteurs permettent seulement de chercher ou de lire. D'autres permettent aussi d'écrire.
+
+**Connecteur est un terme de produit, pas une norme technique universelle.** Un connecteur peut appeler directement l'API d'un service. Un autre peut utiliser un serveur MCP. Un troisième peut interroger un index construit à partir de documents synchronisés. Vérifiez ce que l'intégration concernée prend en charge. La [présentation des connecteurs de Microsoft](https://learn.microsoft.com/en-us/azure/connectors/introduction) donne un exemple d'intégrations basées sur des API.
+
+Connecter un compte ne signifie pas que l'agent voit tous les fichiers, charge toutes vos données dans son contexte ou peut effectuer n'importe quelle action. L'accès dépend du compte, des portées d'autorisation configurées, de l'application et des permissions du service. Les résultats de recherche peuvent aussi provenir d'un index plus ancien que les documents d'origine.
+
+Pour le système de suivi, séparez ces questions : une connexion est-elle configurée ? À quel projet donne-t-elle accès ? Permet-elle seulement de lire, ou aussi de créer des tickets ?
+
+## Ce que MCP standardise
+
+**MCP** signifie **Model Context Protocol**. Il définit une méthode commune de communication entre les applications IA et les fournisseurs de capacités externes. Il ne remplace pas l'API d'un service ; un serveur MCP peut utiliser cette API en arrière-plan.
+
+L'[architecture MCP](https://modelcontextprotocol.io/docs/learn/architecture) comporte trois rôles principaux :
+
+<InfoGrid columns={3} items={[
+  { label: "Hôte", description: "L'application IA dans laquelle l'utilisateur travaille. Elle coordonne les connexions, les interactions avec le modèle et les permissions.", color: "blue" },
+  { label: "Client", description: "La partie de l'hôte qui maintient une connexion avec un serveur MCP.", color: "green" },
+  { label: "Serveur", description: "Un programme qui rend des outils, des ressources ou des prompts accessibles via MCP. Il peut fonctionner localement ou à distance.", color: "amber" }
+]} />
+
+Pour un appel d'outil, le client peut découvrir les outils du serveur avec `tools/list`. L'application fournit au modèle les définitions des outils pertinents. Si le modèle en demande un, l'application peut envoyer une requête `tools/call` via son client MCP. Le serveur exécute ou délègue l'opération, puis renvoie le résultat.
+
+Le modèle n'a pas besoin d'ouvrir lui-même une connexion réseau. L'application et l'implémentation MCP gèrent la communication. La compatibilité reste importante : l'hôte et le serveur doivent prendre en charge les capacités que vous voulez utiliser. Découvrir un outil ne garantit pas le droit de l'exécuter ; les contrôles d'accès s'appliquent toujours.
+
+### MCP propose plus que des outils
+
+MCP définit aussi des **ressources** et des **prompts**. Ces mots ont un sens précis dans le protocole :
+
+<InfoGrid columns={3} items={[
+  { label: "Outils", description: "Des opérations que le modèle peut demander, sous réserve des contrôles de l'application. Exemple : rechercher des tickets.", color: "blue" },
+  { label: "Ressources", description: "Des données que l'application peut fournir comme contexte. Exemple : un guide de projet identifié par une URI.", color: "green" },
+  { label: "Prompts", description: "Des modèles de messages réutilisables que les utilisateurs peuvent sélectionner, avec des arguments facultatifs. Exemple : préparer un rapport de tri des tickets.", color: "amber" }
+]} />
+
+Le [guide des concepts de serveur MCP](https://modelcontextprotocol.io/docs/learn/server-concepts) les décrit comme des outils contrôlés par le modèle, des ressources contrôlées par l'application et des prompts contrôlés par l'utilisateur. Ces termes décrivent les modes d'interaction prévus. Ils ne suppriment pas les contrôles de permissions de l'application.
+
+Un modèle de prompt MCP n'est pas automatiquement un skill. Un skill peut regrouper une procédure plus longue, des références et des scripts. Il peut expliquer à l'agent comment utiliser des outils fournis via MCP, un connecteur direct ou des fonctions locales.
+
+## Essayez une lecture et une écriture
+
+Cet exemple utilise le même système de suivi fictif par deux chemins. Changez le chemin, l'opération ou le niveau d'accès, puis lancez la demande. Pour une écriture, essayez de l'approuver puis de la refuser.
+
+<ToolsDemo copy={{
+  title: "Suivre une demande d'outil",
+  description: "Une simulation avec un système de suivi fictif. Aucun compte n'est connecté et aucun vrai ticket n'est lu ou créé. Les modes connectés utilisent le même compte d'exemple.",
+  routeLabel: "Chemin d'intégration",
+  directLabel: "API directe",
+  mcpLabel: "MCP",
+  toolLabel: "Opération",
+  readLabel: "Rechercher des tickets",
+  writeLabel: "Créer un ticket",
+  accessLabel: "Accès de la connexion",
+  disconnectedLabel: "Déconnecté",
+  readOnlyLabel: "Connecté : lecture seule",
+  readWriteLabel: "Connecté : lecture et écriture",
+  appLabel: "Application IA",
+  hostLabel: "Application IA + client MCP",
+  connectorLabel: "Connecteur API direct",
+  serverLabel: "Serveur MCP du système de suivi",
+  serviceLabel: "Service de suivi des tickets",
+  requestLabel: "Demande d'outil",
+  resultLabel: "Résultat",
+  run: "Lancer la demande",
+  reset: "Réinitialiser",
+  approve: "Approuver la création",
+  decline: "Refuser",
+  query: "bugs ouverts",
+  issueTitle: "Ajouter un état vide utile à la recherche",
+  policyNote: "Le chemin change la façon dont la demande circule, pas ses droits d'accès. Cette application d'exemple demande une approbation avant de créer un ticket ; c'est une règle de l'application, pas une règle universelle de MCP. Changer un réglage réinitialise le résultat.",
+  states: {
+    ready: "Choisissez une configuration et lancez la demande. Aucune opération n'a encore été exécutée.",
+    disconnected: "Aucune connexion n'est configurée. L'application ne peut pas accéder aux tickets de ce projet. Choisir MCP ne connecte pas de compte et n'accorde aucun accès.",
+    denied: "Cette connexion permet seulement de lire. La création d'un ticket est bloquée avant l'exécution. Approuver cette demande seule n'ajouterait pas de droit d'écriture.",
+    read: "La recherche simulée renvoie BUG-42 : la page de recherche reste vide quand aucun résultat ne correspond. L'application peut maintenant transmettre cette preuve au modèle. Aucun ticket n'a été modifié.",
+    approval: "L'accès en écriture est disponible, mais cette application demande votre approbation pour cette action. Vérifiez le titre dans la demande. Rien n'a encore été créé.",
+    created: "Le service simulé confirme la création de FOLLOWUP-108 avec le titre demandé. Le modèle peut citer cet identifiant comme preuve du résultat.",
+    declined: "La création a été refusée. L'application n'a pas envoyé l'opération d'écriture au service et aucun nouveau ticket n'a été créé."
+  }
+}} />
+
+Les modes de lecture et d'écriture présentés ici appartiennent à notre intégration d'exemple. Les permissions réelles peuvent être plus précises. MCP donne aux deux côtés un protocole commun. Il ne décide pas si votre compte peut écrire dans le projet ni si l'application doit d'abord vous demander votre accord. L'**authentification** établit l'identité ; l'**autorisation** détermine les accès permis. Une approbation distincte peut confirmer une action particulière. Les intégrations HTTP distantes peuvent utiliser le [cadre d'autorisation MCP](https://modelcontextprotocol.io/specification/latest/basic/authorization) ; les détails dépendent de l'intégration.
+
+<Quiz
+  question="Une intégration MCP connectée dispose d'un accès en lecture seule. L'agent peut-il créer un ticket avec un prompt plus explicite ?"
+  options={[
+    "Oui, car MCP autorise toutes les opérations demandées par le modèle",
+    "Oui, si l'utilisateur approuve cette demande particulière",
+    "Non. L'intégration a besoin d'un accès en écriture autorisé avant de pouvoir écrire",
+    "Oui, si un skill contient le nom d'outil create_issue"
+  ]}
+  correctIndex={2}
+  explanation="Un prompt, un skill ou l'approbation d'une action n'étend pas les droits de la connexion. L'application et le service doivent autoriser l'écriture."
+/>
+
+## Donner des instructions à un agent doté d'outils
+
+Indiquez à l'agent quelles informations chercher, comment les utiliser et quelles actions vous attendez. Ne supposez pas qu'une connexion existe ni qu'un outil prend en charge toutes les opérations du service.
+
+<Compare
+  before={{ label: "Trop de choses à deviner", content: "Regarde les bugs et règle tout." }}
+  after={{ label: "Résultat et limites clairs", content: "Cherche dans le projet connecté les bugs ouverts concernant les recherches sans résultats. Résume les tickets pertinents et indique leurs identifiants. Rédige un ticket de suivi si nécessaire, mais demande mon accord avant de le créer. Si la connexion ou l'outil nécessaire est indisponible, explique ce qui manque. N'affirme pas qu'un ticket a été créé sans un résultat d'outil réussi." }}
+/>
+
+Un skill de tri réutilisable pourrait ajouter la méthode : chercher les doublons, comparer les étapes de reproduction, suivre le modèle de ticket du projet et signaler les questions non résolues. L'outil fournit l'opération. Le skill explique comment bien l'utiliser.
+
+Les résultats d'outils demandent toujours du jugement. Un commentaire de ticket, un document ou un résultat de recherche peut contenir des erreurs ou du texte qui ressemble à une instruction. Traitez le contenu récupéré comme des données, sans le laisser changer la demande de l'utilisateur ou les règles de l'application. Le support de MCP ne suffit pas à rendre un serveur ou son contenu digne de confiance.
+
+Si une lecture échoue, l'agent peut signaler l'erreur ou essayer une alternative raisonnable. Si une écriture dépasse le délai prévu, il devrait vérifier si la modification a eu lieu avant de réessayer. Sinon, une nouvelle tentative pourrait créer un doublon. Les identifiants de connexion doivent rester dans la configuration de l'intégration, pas dans le prompt de la tâche.
+
+<Quiz
+  question="Comment un connecteur, MCP et un outil peuvent-ils fonctionner ensemble ?"
+  options={[
+    "Ce sont trois noms pour la même chose",
+    "Un connecteur peut utiliser MCP pour rendre une opération du service accessible comme outil",
+    "MCP remplace le service et stocke toutes ses données dans le modèle",
+    "Un skill doit créer la connexion réseau pour chaque appel d'outil"
+  ]}
+  correctIndex={1}
+  explanation="Le connecteur est l'intégration, MCP peut être son protocole de communication et un outil est une opération précise. Une intégration API directe peut aussi fournir des outils sans MCP."
+/>
+
+<InteractiveChecklist
+  title="Avant d'utiliser une nouvelle intégration"
+  items={[
+    { id: "source", label: "Identifier le service, le projet ou les fichiers nécessaires à la tâche" },
+    { id: "capabilities", label: "Vérifier quels outils et opérations l'intégration rend réellement accessibles" },
+    { id: "access", label: "Vérifier l'identité connectée et ses droits de lecture ou d'écriture" },
+    { id: "approval", label: "Décider quelles actions doivent attendre une approbation" },
+    { id: "evidence", label: "Vérifier les preuves renvoyées avant d'annoncer une réussite" }
+  ]}
+/>
+
+Le chapitre suivant, [Les harnesses](/book/26-the-harnesses), examine le logiciel qui coordonne ces connexions, instructions et résultats d'outils pendant toute une tâche.

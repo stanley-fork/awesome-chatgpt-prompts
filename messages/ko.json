@@ -1251,7 +1251,7 @@
     "interactiveBanner": {
       "badge": "인터랙티브 버전 제공",
       "title": "더 상세하고 인터랙티브한 경험을 원하시나요?",
-      "description": "26개 챕터, 실습 연습, 실제 예제가 포함된 종합 인터랙티브 가이드로 AI 프롬프트를 마스터하세요.",
+      "description": "28개 챕터, 실습 연습, 실제 예제가 포함된 종합 인터랙티브 가이드로 AI 프롬프트를 마스터하세요.",
       "cta": "인터랙티브 북 읽기"
     },
     "generalTips": {
@@ -1721,7 +1721,7 @@
     "donate": "프로젝트 후원하기",
     "subtitle": "명확하고 효과적인 프롬프트를 만들기 위한 인터랙티브 가이드",
     "metaTitle": "인터랙티브 프롬프팅 북 | AI 프롬프트 엔지니어링 무료 온라인 가이드",
-    "metaDescription": "이 무료 인터랙티브 가이드로 AI 프롬프트 엔지니어링을 마스터하세요. ChatGPT 프롬프트, 사고의 사슬 추론, Few-Shot 학습 및 고급 기술을 배우세요. 실제 예제가 포함된 25개 이상의 챕터.",
+    "metaDescription": "이 무료 인터랙티브 가이드로 AI 프롬프트 엔지니어링을 마스터하세요. ChatGPT 프롬프트, 사고의 사슬 추론, Few-Shot 학습 및 고급 기술을 배우세요. 실제 예제가 포함된 28개 이상의 챕터.",
     "interactiveGuideBy": "인터랙티브 가이드 by",
     "authorIntro": "안녕하세요, 저는 <author>Fatih Kadir Akın</author>입니다. GitHub의 인기 <repoLink>Awesome ChatGPT Prompts</repoLink> 저장소와 <siteName>prompts.chat</siteName>의 큐레이터입니다.",
     "bookDescription": "이 포괄적인 인터랙티브 가이드에서 매력적이고 효과적인 대화를 생성하는 설득력 있는 AI 프롬프트를 만들기 위한 전문 전략을 발견할 수 있습니다. AI 모델의 작동 방식 이해부터 프롬프트 체이닝 및 에이전트 시스템과 같은 고급 기술 습득까지, 이 책은 AI 상호작용을 다음 단계로 끌어올리는 데 필요한 도구를 제공합니다.",
@@ -1743,7 +1743,7 @@
       "part4": "파트 4: 모범 사례",
       "part5": "파트 5: 사용 사례",
       "part6": "파트 6: 결론",
-      "chapters": "26개 인터랙티브 챕터"
+      "chapters": "28개 인터랙티브 챕터"
     },
     "startReading": "읽기 시작",
     "skipToChapter1": "1장으로 이동",
@@ -1811,7 +1811,9 @@
       "21-business-productivity": "비즈니스와 생산성",
       "22-creative-arts": "창작 예술",
       "23-research-analysis": "연구와 분석",
-      "24-future-of-prompting": "프롬프팅의 미래"
+      "24-future-of-prompting": "프롬프팅의 미래",
+      "27-tools-mcp-connectors": "도구, MCP, 커넥터",
+      "26-the-harnesses": "하네스"
     },
     "chapterDescriptions": {
       "00a-preface": "저자의 개인적인 메모",
@@ -1842,7 +1844,9 @@
       "21-business-productivity": "전문적 및 직장 응용",
       "22-creative-arts": "예술적이고 창의적인 응용",
       "23-research-analysis": "데이터 분석 및 연구 작업",
-      "24-future-of-prompting": "떠오르는 트렌드와 미래 전망"
+      "24-future-of-prompting": "떠오르는 트렌드와 미래 전망",
+      "27-tools-mcp-connectors": "도구, MCP, 커넥터가 AI의 데이터 접근과 작업 실행을 가능하게 하는 방식",
+      "26-the-harnesses": "하네스가 모델, 프롬프트, 스킬, 도구를 연결하는 방식"
     },
     "interactive": {
       "tryIt": "직접 해보기",

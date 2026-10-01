@@ -1,0 +1,235 @@
+You ask an AI to fix a bug. It reads the project, edits a file, runs a test, sees a failure, and tries again. The model is part of this process. But something also has to open the files, run the commands, and bring the results back.
+
+That surrounding software is the **harness**. After learning about agents and skills, it helps to look at the system that makes them work together.
+
+## What Is a Harness?
+
+An **agent harness** is the software that runs an AI agent. It prepares the model's context, exposes tools, handles tool requests, and manages the steps of a task. Depending on the application, it can also manage permissions, saved progress, retries, and limits.
+
+People sometimes use *agent*, *framework*, and *harness* loosely. In this chapter, we use these distinctions:
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Part</th>
+      <th scope="col">What it does</th>
+      <th scope="col">Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Model</td>
+      <td>Produces a response or a request to use a tool</td>
+      <td>Suggests reading a file</td>
+    </tr>
+    <tr>
+      <td>Harness</td>
+      <td>Runs the surrounding process</td>
+      <td>Checks access, reads the file, returns its contents</td>
+    </tr>
+    <tr>
+      <td>Agent</td>
+      <td>The working system pursuing a goal, using a model and a harness</td>
+      <td>Investigates and fixes a bug</td>
+    </tr>
+    <tr>
+      <td>Prompt</td>
+      <td>Gives instructions for the task or behavior</td>
+      <td>"Fix this bug and report the tests you ran"</td>
+    </tr>
+    <tr>
+      <td>Skill</td>
+      <td>Packages reusable instructions and optional resources</td>
+      <td>A bug-fixing procedure with a testing checklist</td>
+    </tr>
+    <tr>
+      <td>Tool</td>
+      <td>Performs a specific operation</td>
+      <td>Reads a file or runs a test</td>
+    </tr>
+  </tbody>
+</table>
+
+A harness can be a small loop in your own application or part of a larger coding assistant. It does not have to include multiple agents or a complicated framework. Anthropic describes this distinction between an agent and its harness in its [guide to evaluating agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents).
+
+<Callout type="info" title="Two uses of the same word">
+An agent harness runs the agent's work. An evaluation harness runs test tasks and measures how well that system performs. They can work together, but they have different jobs.
+</Callout>
+
+## How the Loop Works
+
+Imagine the task is to improve an empty search results page. A typical loop looks like this:
+
+1. **Prepare context.** Include the request, project instructions, relevant skill instructions, and available tool definitions.
+2. **Call the model.** It might answer directly or request a tool, such as reading the search component.
+3. **Check and execute.** The harness validates the request and checks permissions before the tool runs.
+4. **Return the observation.** The file contents, command output, or error go back into the model's context.
+5. **Continue or stop.** The model uses that evidence for its next step. The harness also enforces limits and can pause for user input.
+
+Writing "run the tests" in a response does not run anything. A real tool has to execute the command, and its result has to come back. That feedback lets an agent react to what actually happened. See Anthropic's [explanation of agent workflows](https://www.anthropic.com/engineering/building-effective-agents).
+
+### Try the Same Task with a Different Setup
+
+Change one setting, then step through the run. Watch what changes in the context, the tool request, and the final report.
+
+<HarnessDemo copy={{
+  title: "Inside the harness",
+  description: "A scripted simulation. No AI calls, files, or commands run here. Real agents can take different paths.",
+  taskLabel: "Task",
+  task: "Fix the empty search results page.",
+  modelLabel: "Model",
+  model: "Same model in every run",
+  controlsLabel: "Change the setup",
+  resetHint: "Changing a setting resets the run. A skill helps with the method; it is not required for every task.",
+  traceLabel: "Execution trace",
+  ready: "Ready",
+  running: "Running",
+  complete: "Checks complete",
+  unverified: "Not verified",
+  start: "Start the loop",
+  next: "Next step",
+  reset: "Reset",
+  controls: {
+    clearPrompt: { label: "Clear prompt", description: "Define the expected behavior and the checks to run." },
+    skill: { label: "Bug-fixing skill", description: "Load a reusable procedure for reproducing and checking the bug." },
+    tools: { label: "Tool access", description: "Allow reading and editing project files and running tests." }
+  },
+  steps: {
+    context: {
+      title: "The harness prepares context",
+      clearPrompt: "Show a helpful empty state without changing search behavior. Run the search tests and report the results.",
+      vaguePrompt: "Fix the empty search results page. Expected behavior and acceptance checks are unspecified.",
+      skillLoaded: "Skill loaded: reproduce the issue, make a small change, check empty and non-empty results.",
+      skillMissing: "No skill loaded. The model must choose a method from the task and other instructions."
+    },
+    request: {
+      title: "The model requests a tool",
+      guided: "Following the skill, the model requests the search component and its tests to reproduce the empty state.",
+      unguided: "The model requests the search component. No reusable procedure is included in this run."
+    },
+    permission: {
+      title: "The harness checks access",
+      allowed: "The requested project operations are allowed in this simulation. The harness dispatches the tool call.",
+      blocked: "Project tools are unavailable. A request cannot read or change files, and a prompt cannot grant access."
+    },
+    observation: {
+      title: "Tool results return to the model",
+      guided: "The component and tests reveal a blank empty state. The model prepares a small patch and checks both empty and populated results.",
+      unguided: "The component reveals a blank empty state. The model prepares a patch using the instructions it has.",
+      unavailable: "No file contents or test output are available. The model can offer guidance or ask for the missing information."
+    },
+    review: {
+      title: "The loop checks the work",
+      checked: "After the permitted edit, the test tool returns passing search checks. The model can compare that evidence with the requested behavior.",
+      unclear: "A patch was made, but this run has no agreed acceptance checks. A file change alone does not establish that the task is complete.",
+      unavailable: "The harness has no execution evidence. The model must not report a file change or passing tests."
+    },
+    finish: {
+      title: "The run stops and reports",
+      verified: "The simulated report lists the change and the passing checks. These checks provide evidence, not a guarantee that no bugs remain.",
+      unverified: "The simulated report explains what is still unverified and what is needed next. It does not claim a confirmed fix."
+    }
+  }
+}} />
+
+These are example outcomes, not rules about what every model will do. A model may ask a useful question even with a vague prompt. Clear instructions make your expectations easier to follow and check.
+
+## Why Prompts Matter Inside a Harness
+
+A harness gives the model a way to act. Your prompts explain what useful action looks like. Without a clear goal, an agent can spend many steps doing work you did not need.
+
+The current request is only one part of the instructions. An application may also supply a system prompt, project guidance, tool descriptions, and instructions from a loaded skill. The harness decides how these enter the context; the model follows the instruction hierarchy used by that system.
+
+<Compare
+  before={{ label: "Unclear task", content: "Fix search. Make it better." }}
+  after={{ label: "A task the agent can check", content: "When search has no matches, show a helpful empty state. Keep matching behavior unchanged. Follow the existing UI patterns and use translations for new text. Run the relevant tests. Report what changed, which checks passed, and anything you could not verify." }}
+/>
+
+You do not need to describe every click or command. Define the outcome, relevant constraints, and what counts as done. Let the agent choose routine steps when that flexibility helps.
+
+Tool descriptions are also part of prompting. A tool with clear inputs, outputs, and limits is easier for the model to use correctly. Adding more tools without explaining them can create confusion.
+
+## Where Skills Fit
+
+A prompt usually describes the current task. A **skill** captures a method you want to reuse across tasks: how to review a change, investigate a bug, or prepare a report.
+
+In the [Agent Skills format](https://agentskills.io/specification), a skill has a `SKILL.md` file and can include scripts, references, and assets. A compatible harness makes skills discoverable. It can provide their names and descriptions first, load the selected skill's instructions when relevant, and read supporting files only when needed. This is called **progressive disclosure**.
+
+<Collapsible title="Open a small bug-fixing skill">
+
+```markdown
+---
+name: verify-bug-fix
+description: Use when fixing a reproducible bug in an existing project.
+---
+
+1. Read the project instructions and the relevant code.
+2. Reproduce the reported behavior, or explain why you cannot.
+3. Make the smallest change that addresses the cause.
+4. Run relevant checks, including a nearby case that should still work.
+5. Report the change, evidence, and remaining uncertainty.
+
+If a required tool is unavailable, explain the limitation.
+Do not describe an unrun check as passing.
+```
+
+</Collapsible>
+
+The harness still needs the tools and environment that the skill expects. A skill describing a browser test does not install a browser. A script may need dependencies. Instructions may need changes when moved to another harness with different tools. Loading a skill also does not train the model or guarantee expertise.
+
+Use the task prompt for what is specific today. Put a repeated procedure in a skill. Keep shared project rules in the instruction files your harness supports. This avoids copying a large, slightly different checklist into every request.
+
+<Quiz
+  question="A skill says to run browser tests, but the harness has no browser tool. What should happen?"
+  options={[
+    "The skill automatically creates browser access",
+    "The agent should report the limitation and use an available alternative or ask for what it needs",
+    "The agent can mark the tests as passed after reading the code",
+    "A longer prompt will make the browser available"
+  ]}
+  correctIndex={1}
+  explanation="A skill provides instructions and possibly resources. The harness and environment provide the actual capabilities. Missing execution evidence must stay visible."
+/>
+
+## Instructions and Permissions Have Different Jobs
+
+"Do not edit files outside this project" is a useful instruction. A filesystem boundary that blocks those writes is an enforced control. Reliable setups use both.
+
+Permissions, sandboxing, and approval checks must be implemented by the harness, its tools, or the underlying environment. A prompt cannot enforce them by itself. The [VS Code agent security documentation](https://code.visualstudio.com/docs/agents/run/security) shows concrete examples of these controls.
+
+The same distinction matters for information coming back from tools. A web page or repository file can contain text that looks like an instruction. Treat that text as task data unless it comes from a trusted instruction source. Keep access limited to what the work needs.
+
+<Quiz
+  question="Which control actually prevents a tool from writing outside an allowed directory?"
+  options={[
+    "Repeating the restriction in capital letters",
+    "Giving the agent a careful persona",
+    "Enforcing the directory boundary in the tool or execution environment",
+    "Adding more examples to the skill"
+  ]}
+  correctIndex={2}
+  explanation="Prompts guide behavior. The tool or environment must enforce the access boundary even if the model requests a disallowed action."
+/>
+
+## What Makes a Harness Useful?
+
+More autonomy is useful only when the system can check its work and recover from problems. For a long task, look at how the harness handles:
+
+- **Context:** Keep relevant instructions and evidence available. Summarizing old steps can save space, but it can also lose details.
+- **Progress:** Save decisions and unfinished work so the next session can continue. Saved state still needs to be loaded into context.
+- **Failures:** Return errors clearly, use bounded retries, and avoid repeating actions with side effects blindly.
+- **Limits:** Stop at a time, cost, or step budget, or when the work needs user input. Stopping is not proof of success.
+- **Verification:** Inspect actual files, test results, or other outcomes. A confident final message is not enough.
+
+When comparing setups, try the same real tasks and inspect both the outcomes and the execution traces. Keep the model fixed when you want to study a harness change. Change one prompt, skill, or tool setting at a time, and repeat tasks because individual runs vary.
+
+<InteractiveChecklist
+  title="Try this on a task you already do"
+  items={[
+    { id: "outcome", label: "Write the outcome and how you will check it" },
+    { id: "tools", label: "Choose the tools and access the task needs" },
+    { id: "skill", label: "Move one repeated procedure into a small skill" },
+    { id: "limits", label: "Decide what happens when a tool fails or a limit is reached" },
+    { id: "evidence", label: "Run the task and compare the report with the actual evidence" }
+  ]}
+/>

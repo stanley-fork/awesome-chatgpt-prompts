@@ -6,6 +6,10 @@ import createMDX from "@next/mdx";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const withMDX = createMDX({
   extension: /\.mdx?$/,
+  options: {
+    // Plugin names keep loader options serializable for Turbopack.
+    remarkPlugins: ["remark-gfm"],
+  },
 });
 
 const nextConfig: NextConfig = {
