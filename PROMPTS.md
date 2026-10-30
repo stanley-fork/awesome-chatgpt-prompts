@@ -211613,3 +211613,16 @@ Create a program for a performance called"", the purpose of which is to help cre
 
 </details>
 
+<details>
+<summary><strong>My glad girl </strong></summary>
+
+## My glad girl 
+
+Contributed by @anonymous
+
+```md
+My girl going a head smiley 
+```
+
+</details>
+
