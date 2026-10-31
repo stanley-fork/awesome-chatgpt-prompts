@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ToolError } from "./tool";
+import { BOT_COMPUTER_REQUIREMENTS } from "@/lib/bots/schema";
 
 /** Input fields shared by several tools */
 export const limitInput = (defaultValue: number, max: number, noun: string) =>
@@ -38,7 +39,7 @@ export function nextCursor(offset: number, pageSize: number, limit: number, tota
  * Output schemas describe the documented fields; objects stay open so new fields can be added
  * without breaking clients that validate structuredContent.
  */
-const taxonomyOutput = z.looseObject({ name: z.string(), slug: z.string() });
+export const taxonomyOutput = z.looseObject({ name: z.string(), slug: z.string() });
 
 export const promptSummaryOutput = z.looseObject({
   id: z.string(),
@@ -77,6 +78,7 @@ export const botSummaryOutput = z.looseObject({
   platformNames: z.array(z.string()),
   icon: z.string().nullable(),
   color: z.string().nullable(),
+  computerRequirement: z.enum(BOT_COMPUTER_REQUIREMENTS),
   category: taxonomyOutput.nullable(),
   tags: z.array(taxonomyOutput),
   author: z.string(),
@@ -95,6 +97,7 @@ export const botDetailOutput = z.looseObject({
   platformNames: z.array(z.string()),
   icon: z.string().nullable(),
   color: z.string().nullable(),
+  computerRequirement: z.enum(BOT_COMPUTER_REQUIREMENTS),
   instructions: z.string(),
   routines: z.array(z.looseObject({ name: z.string(), type: z.string(), trigger: z.string(), triggerLabel: z.string(), prompt: z.string() })),
   skills: z.array(z.looseObject({ name: z.string(), description: z.string(), source: z.string() })),

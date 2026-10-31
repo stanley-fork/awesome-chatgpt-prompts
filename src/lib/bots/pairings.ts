@@ -4,6 +4,8 @@ import {
   BOT_PLATFORM_INFO,
   botSelect,
   canonicalPair,
+  computerListMark,
+  computerListNotes,
   getBotUrls,
   getHermesInstallCommand,
   getInstallPrompt,
@@ -110,12 +112,16 @@ export function botPairingsJson(pairings: BotPairingView[], baseUrl: string) {
 /** One prompt that sets up every bot of a set on the same platform */
 export function getBundleInstallPrompt(bots: BotView[], platform: BotPlatform, baseUrl: string): string {
   if (bots.length === 1) return getInstallPrompt(bots[0], platform, baseUrl);
-  const list = bots.map((bot, index) => `${index + 1}. "${bot.title}": ${getBotUrls(bot, baseUrl).markdown}`).join("\n");
+  const list = bots
+    .map((bot, index) => `${index + 1}. "${bot.title}"${computerListMark(bot.computerRequirement)}: ${getBotUrls(bot, baseUrl).markdown}`)
+    .join("\n");
   return `Set up these ${bots.length} bots ${getInstallTarget(platform, bots.length)}. They are designed to work together, so install all of them:
 
 ${list}
 
-For each bot, go to its URL and create it exactly as described there: adopt its instructions as the standing instructions for that bot, install its skills, and set up each routine with the given schedule or trigger. Ask me to connect each required connector once, even when several bots need it. Confirm each bot when done.`;
+For each bot, go to its URL and create it exactly as described there: adopt its instructions as the standing instructions for that bot, install its skills, and set up each routine with the given schedule or trigger. Ask me to connect each required connector once, even when several bots need it. Confirm each bot when done.${computerListNotes(bots)
+    .map((note) => ` ${note}`)
+    .join("")}`;
 }
 
 export interface BotBundleInstallOption {
@@ -130,10 +136,17 @@ export interface BotBundleInstallOption {
   command: string | null;
 }
 
-/** Install options for a bot together with its paired bots, one per platform of the bot */
-export function getBundleInstallOptions(bot: BotView, paired: BotView[], baseUrl: string): BotBundleInstallOption[] {
-  const all = [bot, ...paired.filter((other) => other.id !== bot.id)];
-  return bot.platforms.map((platform) => {
+/**
+ * Install options for a set of bots, one per platform. Each option covers the bots of the set
+ * that support the platform; installPrompt builds the prompt from those bots.
+ */
+export function buildBundleInstallOptions(
+  all: BotView[],
+  platforms: BotPlatform[],
+  baseUrl: string,
+  installPrompt: (members: BotView[], platform: BotPlatform) => string
+): BotBundleInstallOption[] {
+  return platforms.map((platform) => {
     const members = all.filter((member) => member.platforms.includes(platform));
     return {
       platform,
@@ -144,8 +157,14 @@ export function getBundleInstallOptions(bot: BotView, paired: BotView[], baseUrl
         installUrl: platform === "GROK_BOT" ? member.installUrl : null,
       })),
       skipped: all.filter((member) => !member.platforms.includes(platform)).map((member) => member.title),
-      installPrompt: getBundleInstallPrompt(members, platform, baseUrl),
+      installPrompt: installPrompt(members, platform),
       command: platform === "HERMES" ? members.map((member) => getHermesInstallCommand(member, baseUrl)).join("\n") : null,
     };
   });
+}
+
+/** Install options for a bot together with its paired bots, one per platform of the bot */
+export function getBundleInstallOptions(bot: BotView, paired: BotView[], baseUrl: string): BotBundleInstallOption[] {
+  const all = [bot, ...paired.filter((other) => other.id !== bot.id)];
+  return buildBundleInstallOptions(all, bot.platforms, baseUrl, (members, platform) => getBundleInstallPrompt(members, platform, baseUrl));
 }

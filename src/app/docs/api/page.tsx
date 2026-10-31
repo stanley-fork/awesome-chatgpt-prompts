@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { buildPageMetadata } from "@/lib/seo";
@@ -26,6 +27,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ApiDocsPage() {
+  const t = await getTranslations("apiDocs");
+  const code = (chunks: ReactNode) => <code className="text-xs">{chunks}</code>;
   const headersList = await headers();
   const host = headersList.get("host") || "prompts.chat";
   const protocol = host.includes("localhost") ? "http" : "https";
@@ -778,6 +781,12 @@ curl -X POST ${baseUrl}/api/mcp \\
                     <TableCell className="text-muted-foreground text-sm">Only bots for this platform, e.g. <code className="text-xs">HERMES</code></TableCell>
                   </TableRow>
                   <TableRow>
+                    <TableCell className="font-mono text-xs">computerRequirement</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">string</TableCell>
+                    <TableCell className="text-xs">No</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{t.rich("computerRequirementFilter", { code })}</TableCell>
+                  </TableRow>
+                  <TableRow>
                     <TableCell className="font-mono text-xs">category</TableCell>
                     <TableCell className="text-muted-foreground text-xs">string</TableCell>
                     <TableCell className="text-xs">No</TableCell>
@@ -908,6 +917,12 @@ curl -X POST ${baseUrl}/api/mcp \\
                     <TableCell className="text-muted-foreground text-xs">string | null</TableCell>
                     <TableCell className="text-xs">No</TableCell>
                     <TableCell className="text-muted-foreground text-sm">https one-click install link (Grok Bot template link)</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-mono text-xs">computerRequirement</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">string</TableCell>
+                    <TableCell className="text-xs">No</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{t.rich("computerRequirementInput", { code })}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-mono text-xs">routines</TableCell>
